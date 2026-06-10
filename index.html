@@ -123,7 +123,7 @@
     <div class="grid2">
       <div class="kv"><span class="k">Enters from</span><span class="v" id="kvFrom">—</span></div>
       <div class="kv"><span class="k">Exits toward</span><span class="v" id="kvDir">—</span></div>
-      <div class="kv"><span class="k">Camera side</span><span class="v" id="kvTrack">—</span></div>
+      <div class="kv"><span class="k">Aim at</span><span class="v" id="kvTrack">—</span></div>
       <div class="kv"><span class="k">Est. speed</span><span class="v" id="kvSpeed">—</span></div>
     </div>
     <button class="btn-ghost" id="btnCompass" style="margin-top:16px;">🧭 Calibrate to device compass</button>
@@ -154,7 +154,13 @@ let stationIdx = S.indexOfId("odawara");
 let events = [];
 let deviceHeading = null;
 
-function nowMinutes(){ const d=new Date(); return d.getHours()*60 + d.getMinutes() + d.getSeconds()/60; }
+// Timetables are Japan time, so compute "now" in Asia/Tokyo regardless of the device clock.
+function jstParts(){
+  const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Tokyo",hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date());
+  const g = t => +p.find(x=>x.type===t).value;
+  return { h:g("hour")%24, m:g("minute"), s:g("second") };
+}
+function nowMinutes(){ const {h,m,s}=jstParts(); return h*60 + m + s/60; }
 function fmtClock(min){ const h=Math.floor(min/60)%24, m=Math.floor(min%60); return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
 function fmtCountdown(mins){ if(mins<0)mins=0; const t=Math.round(mins*60); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
 function terminalName(dir){ return dir==="down" ? S.STATIONS[S.N-1].name : S.STATIONS[0].name; }
@@ -186,7 +192,7 @@ function selectStation(idx){
 }
 
 function render(){
-  $("clock").textContent = new Date().toLocaleTimeString("en-GB");
+  { const {h,m,s}=jstParts(); $("clock").textContent = [h,m,s].map(n=>String(n).padStart(2,"0")).join(":")+" JST"; }
   const t = nowMinutes();
   const passes = events.filter(e => !e.stops && e.timeMin>t && (e.type==="nozomi"||e.type==="hikari"));
   const next = passes[0];
@@ -221,7 +227,7 @@ function render(){
     `Passes <span class="a">${fromName} side (${S.compass(approach)})</span> ▶ <span class="b">${toName} side (${S.compass(exit)})</span>`;
   $("kvFrom").textContent = fromName+" · "+S.compass(approach)+" "+Math.round(approach)+"°";
   $("kvDir").textContent  = toName+" · "+S.compass(exit)+" "+Math.round(exit)+"°";
-  $("kvTrack").textContent = next.dir==="down" ? "South side (down track)" : "North side (up track)";
+  $("kvTrack").textContent = next.dir==="down" ? "Down track → "+terminalName("down") : "Up track → "+terminalName("up");
   $("kvSpeed").textContent = "~"+m.cruise+" km/h";
   setArrow(approach);
 

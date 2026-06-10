@@ -123,11 +123,14 @@ async function buildLiveEvents(idx) {
       for (const [name, e] of byName) {
         if (e.before == null || e.after == null) continue;
         if (ownNames.has(name)) continue; // למעשה עוצרת ב-idx — לא מעבר
-        // זמן ה"after" הוא יציאה מהתחנה הבאה וכולל את זמן-העצירה (dwell) שלה;
-        // מחסירים אותו כדי לקבל את זמן-ההגעה האמיתי ולדייק את האינטרפולציה.
+        // זמני-הלוח הם יציאות. ביעד (תחנת-העצירה בכיוון הנסיעה) זמן-היציאה כולל את
+        // זמן-העצירה (dwell), ולכן מחסירים אותו כדי לקבל את זמן-ההגעה לאינטרפולציה.
+        // היעד הוא הצד המערבי (Osaka) ביורדת, והצד המזרחי (Tokyo) בעולה.
         const dwell = (Spotter.TRAIN_META[e.type] || {}).dwell || 0;
+        const bT = dir === "up" ? e.before - dwell : e.before;
+        const aT = dir === "down" ? e.after - dwell : e.after;
         const t = Spotter.interpolatePass(
-          [{ idx: before, timeMin: e.before }, { idx: after, timeMin: e.after - dwell }], idx, dir);
+          [{ idx: before, timeMin: bT }, { idx: after, timeMin: aT }], idx, dir);
         if (t == null) continue;
         events.push({ type: e.type, dir, timeMin: t, stops: false, dest: e.dest });
       }

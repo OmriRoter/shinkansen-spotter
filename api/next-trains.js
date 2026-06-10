@@ -137,9 +137,13 @@ async function buildLiveEvents(idx) {
       for (const r of b2) { const e = map.get(r.name); if (e) e.after = r.depMin; }
       for (const [name, e] of map) {
         if (e.before == null || e.after == null || ownNames.has(name)) continue;
-        // subtract the next-stop dwell from its departure to recover true arrival time
+        // Board times are departures. The destination-side stop's departure includes
+        // its dwell, so subtract it to recover the true arrival used for interpolation.
+        // Destination is the Osaka-side stop going down, the Tokyo-side stop going up.
         const dwell = (META[e.type] || {}).dwell || 0;
-        events.push({ type: e.type, dir, timeMin: interpolate(before, e.before, after, e.after - dwell, idx), stops: false, dest: e.dest });
+        const bT = dir === "up" ? e.before - dwell : e.before;
+        const aT = dir === "down" ? e.after - dwell : e.after;
+        events.push({ type: e.type, dir, timeMin: interpolate(before, bT, after, aT, idx), stops: false, dest: e.dest });
       }
     }
   }
