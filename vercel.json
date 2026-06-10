@@ -1,7 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
-  "functions": {
-    "api/next-trains.js": { "maxDuration": 30 }
-  }
+  "framework": null,
+  "cleanUrls": true
 }
