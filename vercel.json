@@ -3,7 +3,8 @@
   "builds": [
     { "src": "api/next-trains.js", "use": "@vercel/node" },
     { "src": "index.html", "use": "@vercel/static" },
-    { "src": "engine.js", "use": "@vercel/static" }
+    { "src": "engine.js", "use": "@vercel/static" },
+    { "src": "lines-data.js", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/next-trains", "dest": "/api/next-trains.js" },

@@ -1,0 +1,978 @@
+{
+ "tokaido": {
+  "lineId": "00000110",
+  "stations": [
+   {
+    "id": "tokyo",
+    "name": "Tokyo",
+    "jp": "東京",
+    "lat": 35.681041,
+    "lon": 139.767106,
+    "node": "00006668"
+   },
+   {
+    "id": "shinagawa",
+    "name": "Shinagawa",
+    "jp": "品川",
+    "lat": 35.628431,
+    "lon": 139.73903,
+    "node": "00007825"
+   },
+   {
+    "id": "shinyokohama",
+    "name": "Shin-Yokohama",
+    "jp": "新横浜",
+    "lat": 35.507399,
+    "lon": 139.617672,
+    "node": "00004179"
+   },
+   {
+    "id": "odawara",
+    "name": "Odawara",
+    "jp": "小田原",
+    "lat": 35.256246,
+    "lon": 139.154674,
+    "node": "00003742"
+   },
+   {
+    "id": "atami",
+    "name": "Atami",
+    "jp": "熱海",
+    "lat": 35.103654,
+    "lon": 139.0778,
+    "node": "00007326"
+   },
+   {
+    "id": "mishima",
+    "name": "Mishima",
+    "jp": "三島",
+    "lat": 35.126222,
+    "lon": 138.911046,
+    "node": "00003056"
+   },
+   {
+    "id": "shinfujishizuoka",
+    "name": "Shin-fuji(Shizuoka)",
+    "jp": "新富士(静岡県)",
+    "lat": 35.142103,
+    "lon": 138.66338,
+    "node": "00004358"
+   },
+   {
+    "id": "shizuoka",
+    "name": "Shizuoka",
+    "jp": "静岡",
+    "lat": 34.971754,
+    "lon": 138.389027,
+    "node": "00004995"
+   },
+   {
+    "id": "kakegawa",
+    "name": "Kakegawa",
+    "jp": "掛川",
+    "lat": 34.76925,
+    "lon": 138.014893,
+    "node": "00001232"
+   },
+   {
+    "id": "hamamatsu",
+    "name": "Hamamatsu",
+    "jp": "浜松",
+    "lat": 34.703819,
+    "lon": 137.734701,
+    "node": "00007841"
+   },
+   {
+    "id": "toyohashi",
+    "name": "Toyohashi",
+    "jp": "豊橋",
+    "lat": 34.762809,
+    "lon": 137.381668,
+    "node": "00008206"
+   },
+   {
+    "id": "mikawanjo",
+    "name": "Mikawanjo",
+    "jp": "三河安城",
+    "lat": 34.970266,
+    "lon": 137.06147,
+    "node": "00002968"
+   },
+   {
+    "id": "nagoya",
+    "name": "Nagoya",
+    "jp": "名古屋",
+    "lat": 35.17068,
+    "lon": 136.881638,
+    "node": "00008576"
+   },
+   {
+    "id": "gifuhashima",
+    "name": "Gifuhashima",
+    "jp": "岐阜羽島",
+    "lat": 35.315702,
+    "lon": 136.685656,
+    "node": "00001468"
+   },
+   {
+    "id": "maibara",
+    "name": "Maibara",
+    "jp": "米原",
+    "lat": 35.314721,
+    "lon": 136.289839,
+    "node": "00008117"
+   },
+   {
+    "id": "kyoto",
+    "name": "Kyoto",
+    "jp": "京都",
+    "lat": 34.985237,
+    "lon": 135.758504,
+    "node": "00001756"
+   },
+   {
+    "id": "shinosaka",
+    "name": "Shin-osaka",
+    "jp": "新大阪",
+    "lat": 34.734018,
+    "lon": 135.501756,
+    "node": "00004305"
+   }
+  ],
+  "stops": {
+   "nozomi": [
+    0,
+    1,
+    2,
+    12,
+    15,
+    16
+   ],
+   "hikari": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    7,
+    9,
+    10,
+    12,
+    13,
+    14,
+    15,
+    16
+   ],
+   "kodama": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+   ]
+  }
+ },
+ "sanyo": {
+  "lineId": "00000069",
+  "stations": [
+   {
+    "id": "shinosaka",
+    "name": "Shin-osaka",
+    "jp": "新大阪",
+    "lat": 34.73341,
+    "lon": 135.499943,
+    "node": "00004305"
+   },
+   {
+    "id": "shinkobe",
+    "name": "Shin-kobe",
+    "jp": "新神戸",
+    "lat": 34.706464,
+    "lon": 135.195759,
+    "node": "00004269"
+   },
+   {
+    "id": "nishiakashi",
+    "name": "Nishiakashi",
+    "jp": "西明石",
+    "lat": 34.666841,
+    "lon": 134.960352,
+    "node": "00004947"
+   },
+   {
+    "id": "himeji",
+    "name": "Himeji",
+    "jp": "姫路",
+    "lat": 34.826758,
+    "lon": 134.690513,
+    "node": "00007808"
+   },
+   {
+    "id": "aioihyogo",
+    "name": "Aioi(Hyogo)",
+    "jp": "相生(兵庫県)",
+    "lat": 34.818059,
+    "lon": 134.473933,
+    "node": "00005382"
+   },
+   {
+    "id": "okayama",
+    "name": "Okayama",
+    "jp": "岡山",
+    "lat": 34.665975,
+    "lon": 133.917634,
+    "node": "00000859"
+   },
+   {
+    "id": "shinkurashiki",
+    "name": "Shin-kurashiki",
+    "jp": "新倉敷",
+    "lat": 34.565088,
+    "lon": 133.678542,
+    "node": "00004298"
+   },
+   {
+    "id": "fukuyama",
+    "name": "Fukuyama",
+    "jp": "福山",
+    "lat": 34.489471,
+    "lon": 133.362699,
+    "node": "00008021"
+   },
+   {
+    "id": "shinonomichi",
+    "name": "Shin-onomichi",
+    "jp": "新尾道",
+    "lat": 34.429971,
+    "lon": 133.190251,
+    "node": "00004353"
+   },
+   {
+    "id": "mihara",
+    "name": "Mihara",
+    "jp": "三原",
+    "lat": 34.400602,
+    "lon": 133.083022,
+    "node": "00003005"
+   },
+   {
+    "id": "higashihiroshima",
+    "name": "Higashihiroshima",
+    "jp": "東広島",
+    "lat": 34.389273,
+    "lon": 132.759646,
+    "node": "00006690"
+   },
+   {
+    "id": "hiroshima",
+    "name": "Hiroshima",
+    "jp": "広島",
+    "lat": 34.398176,
+    "lon": 132.475861,
+    "node": "00002397"
+   },
+   {
+    "id": "shiniwakuni",
+    "name": "Shin-iwakuni",
+    "jp": "新岩国",
+    "lat": 34.164814,
+    "lon": 132.149762,
+    "node": "00004201"
+   },
+   {
+    "id": "tokuyama",
+    "name": "Tokuyama",
+    "jp": "徳山",
+    "lat": 34.050628,
+    "lon": 131.802373,
+    "node": "00006979"
+   },
+   {
+    "id": "shinyamaguchi",
+    "name": "Shin-Yamaguchi",
+    "jp": "新山口",
+    "lat": 34.093781,
+    "lon": 131.396293,
+    "node": "00003671"
+   },
+   {
+    "id": "asa",
+    "name": "Asa",
+    "jp": "厚狭",
+    "lat": 34.05373,
+    "lon": 131.159989,
+    "node": "00002343"
+   },
+   {
+    "id": "shinshimonoseki",
+    "name": "Shin-shimonoseki",
+    "jp": "新下関",
+    "lat": 34.005737,
+    "lon": 130.948631,
+    "node": "00004184"
+   },
+   {
+    "id": "kokurafukuoka",
+    "name": "Kokura(Fukuoka)",
+    "jp": "小倉(福岡県)",
+    "lat": 33.886904,
+    "lon": 130.882523,
+    "node": "00003716"
+   },
+   {
+    "id": "hakata",
+    "name": "Hakata",
+    "jp": "博多",
+    "lat": 33.589806,
+    "lon": 130.420652,
+    "node": "00007420"
+   }
+  ],
+  "stops": {
+   "mizuho": [
+    0,
+    1,
+    3,
+    5,
+    7,
+    11,
+    14,
+    17,
+    18
+   ],
+   "hikari": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    16,
+    17,
+    18
+   ],
+   "sakura": [
+    0,
+    1,
+    2,
+    3,
+    5,
+    7,
+    11,
+    13,
+    14,
+    16,
+    17,
+    18
+   ],
+   "kodama": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+   ],
+   "nozomi": [
+    0,
+    1,
+    2,
+    3,
+    5,
+    7,
+    11,
+    13,
+    14,
+    17,
+    18
+   ],
+   "tsubame": [
+    16,
+    17,
+    18
+   ]
+  }
+ },
+ "tohoku": {
+  "lineId": "00000185",
+  "stations": [
+   {
+    "id": "tokyo",
+    "name": "Tokyo",
+    "jp": "東京",
+    "lat": 35.681041,
+    "lon": 139.767106,
+    "node": "00006668"
+   },
+   {
+    "id": "ueno",
+    "name": "Ueno",
+    "jp": "上野",
+    "lat": 35.713365,
+    "lon": 139.776703,
+    "node": "00004067"
+   },
+   {
+    "id": "omiyasaitama",
+    "name": "Omiya (Saitama)",
+    "jp": "大宮(埼玉県)",
+    "lat": 35.906266,
+    "lon": 139.623602,
+    "node": "00005564"
+   },
+   {
+    "id": "oyama",
+    "name": "Oyama",
+    "jp": "小山",
+    "lat": 36.313145,
+    "lon": 139.806449,
+    "node": "00003687"
+   },
+   {
+    "id": "utsunomiya",
+    "name": "Utsunomiya",
+    "jp": "宇都宮",
+    "lat": 36.559056,
+    "lon": 139.898357,
+    "node": "00000522"
+   },
+   {
+    "id": "nasushiobara",
+    "name": "Nasushiobara",
+    "jp": "那須塩原",
+    "lat": 36.931818,
+    "lon": 140.020795,
+    "node": "00007009"
+   },
+   {
+    "id": "shinshirakawa",
+    "name": "Shin-shirakawa",
+    "jp": "新白河",
+    "lat": 37.122519,
+    "lon": 140.188146,
+    "node": "00004347"
+   },
+   {
+    "id": "koriyamafukushima",
+    "name": "Koriyama(Fukushima)",
+    "jp": "郡山(福島県)",
+    "lat": 37.39815,
+    "lon": 140.38846,
+    "node": "00002012"
+   },
+   {
+    "id": "fukushimafukushima",
+    "name": "Fukushima(Fukushima)",
+    "jp": "福島(福島県)",
+    "lat": 37.754211,
+    "lon": 140.45991,
+    "node": "00008031"
+   },
+   {
+    "id": "shiroishizao",
+    "name": "Shiroishizao",
+    "jp": "白石蔵王",
+    "lat": 37.995192,
+    "lon": 140.63296,
+    "node": "00007462"
+   },
+   {
+    "id": "sendai",
+    "name": "Sendai",
+    "jp": "仙台",
+    "lat": 38.260252,
+    "lon": 140.882056,
+    "node": "00005125"
+   },
+   {
+    "id": "furukawa",
+    "name": "Furukawa",
+    "jp": "古川",
+    "lat": 38.570542,
+    "lon": 140.967717,
+    "node": "00002171"
+   },
+   {
+    "id": "kurikomakogen",
+    "name": "Kurikomakogen",
+    "jp": "くりこま高原",
+    "lat": 38.749042,
+    "lon": 141.071786,
+    "node": "00000052"
+   },
+   {
+    "id": "ichinoseki",
+    "name": "Ichinoseki",
+    "jp": "一ノ関",
+    "lat": 38.926693,
+    "lon": 141.139212,
+    "node": "00000445"
+   },
+   {
+    "id": "mizusawaesashi",
+    "name": "Mizusawaesashi",
+    "jp": "水沢江刺",
+    "lat": 39.145327,
+    "lon": 141.188736,
+    "node": "00004567"
+   },
+   {
+    "id": "kitakami",
+    "name": "Kitakami",
+    "jp": "北上",
+    "lat": 39.281477,
+    "lon": 141.122211,
+    "node": "00008335"
+   },
+   {
+    "id": "shinhanamaki",
+    "name": "Shin-hanamaki",
+    "jp": "新花巻",
+    "lat": 39.406729,
+    "lon": 141.17381,
+    "node": "00004189"
+   },
+   {
+    "id": "morioka",
+    "name": "Morioka",
+    "jp": "盛岡",
+    "lat": 39.701596,
+    "lon": 141.1366,
+    "node": "00004689"
+   },
+   {
+    "id": "iwatenumakunai",
+    "name": "Iwatenumakunai",
+    "jp": "いわて沼宮内",
+    "lat": 39.96071,
+    "lon": 141.217571,
+    "node": "00003885"
+   },
+   {
+    "id": "ninohe",
+    "name": "Ninohe",
+    "jp": "二戸",
+    "lat": 40.260026,
+    "lon": 141.285715,
+    "node": "00007194"
+   },
+   {
+    "id": "hachinohe",
+    "name": "Hachinohe",
+    "jp": "八戸",
+    "lat": 40.509422,
+    "lon": 141.430985,
+    "node": "00007520"
+   },
+   {
+    "id": "shichinohetowada",
+    "name": "Shichinohe-Towada",
+    "jp": "七戸十和田",
+    "lat": 40.720063,
+    "lon": 141.153417,
+    "node": "00009591"
+   },
+   {
+    "id": "shinaomori",
+    "name": "Shin-Aomori",
+    "jp": "新青森",
+    "lat": 40.828106,
+    "lon": 140.693469,
+    "node": "00004283"
+   }
+  ],
+  "stops": {
+   "yamabiko": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+   ],
+   "tsubasa": [
+    0,
+    1,
+    2,
+    4,
+    7,
+    8
+   ],
+   "hayabusa": [
+    0,
+    1,
+    2,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "komachi": [
+    0,
+    1,
+    2,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+   ],
+   "nasuno": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "hayate": [
+    17,
+    19,
+    20,
+    21,
+    22
+   ]
+  }
+ },
+ "kyushu": {
+  "lineId": "00001017",
+  "stations": [
+   {
+    "id": "hakata",
+    "name": "Hakata",
+    "jp": "博多",
+    "lat": 33.589806,
+    "lon": 130.420652,
+    "node": "00007420"
+   },
+   {
+    "id": "shintosu",
+    "name": "Shin-tosu",
+    "jp": "新鳥栖",
+    "lat": 33.369804,
+    "lon": 130.491462,
+    "node": "00009595"
+   },
+   {
+    "id": "kurume",
+    "name": "Kurume",
+    "jp": "久留米",
+    "lat": 33.320184,
+    "lon": 130.501331,
+    "node": "00001628"
+   },
+   {
+    "id": "chikugofunagoya",
+    "name": "Chikugofunagoya",
+    "jp": "筑後船小屋",
+    "lat": 33.178243,
+    "lon": 130.49171,
+    "node": "00005292"
+   },
+   {
+    "id": "shinomuta",
+    "name": "Shin-omuta",
+    "jp": "新大牟田",
+    "lat": 33.071267,
+    "lon": 130.488726,
+    "node": "00009594"
+   },
+   {
+    "id": "shintamana",
+    "name": "Shin-tamana",
+    "jp": "新玉名",
+    "lat": 32.942522,
+    "lon": 130.573574,
+    "node": "00009593"
+   },
+   {
+    "id": "kumamoto",
+    "name": "Kumamoto",
+    "jp": "熊本",
+    "lat": 32.790202,
+    "lon": 130.688728,
+    "node": "00001969"
+   },
+   {
+    "id": "shinyatsushiro",
+    "name": "Shin-yatsushiro",
+    "jp": "新八代",
+    "lat": 32.518286,
+    "lon": 130.634255,
+    "node": "00009371"
+   },
+   {
+    "id": "shinminamata",
+    "name": "Shin-minamata",
+    "jp": "新水俣",
+    "lat": 32.210733,
+    "lon": 130.428846,
+    "node": "00009370"
+   },
+   {
+    "id": "izumi",
+    "name": "Izumi",
+    "jp": "出水",
+    "lat": 32.089691,
+    "lon": 130.358164,
+    "node": "00003572"
+   },
+   {
+    "id": "sendaikagoshima",
+    "name": "Sendai(Kagoshima)",
+    "jp": "川内(鹿児島県)",
+    "lat": 31.813711,
+    "lon": 130.312222,
+    "node": "00005235"
+   },
+   {
+    "id": "kagoshimachuo",
+    "name": "Kagoshima-chuo",
+    "jp": "鹿児島中央",
+    "lat": 31.583803,
+    "lon": 130.541714,
+    "node": "00004786"
+   }
+  ],
+  "stops": {
+   "tsubame": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "sakura": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "mizuho": [
+    0,
+    2,
+    6,
+    10,
+    11
+   ]
+  }
+ },
+ "hokuriku": {
+  "lineId": "00000177",
+  "stations": [
+   {
+    "id": "tokyo",
+    "name": "Tokyo",
+    "jp": "東京",
+    "lat": 35.681041,
+    "lon": 139.767106,
+    "node": "00006668"
+   },
+   {
+    "id": "ueno",
+    "name": "Ueno",
+    "jp": "上野",
+    "lat": 35.713365,
+    "lon": 139.776703,
+    "node": "00004067"
+   },
+   {
+    "id": "omiyasaitama",
+    "name": "Omiya (Saitama)",
+    "jp": "大宮(埼玉県)",
+    "lat": 35.906266,
+    "lon": 139.623602,
+    "node": "00005564"
+   },
+   {
+    "id": "kumagaya",
+    "name": "Kumagaya",
+    "jp": "熊谷",
+    "lat": 36.139534,
+    "lon": 139.389531,
+    "node": "00001968"
+   },
+   {
+    "id": "honjowaseda",
+    "name": "Honjowaseda",
+    "jp": "本庄早稲田",
+    "lat": 36.218826,
+    "lon": 139.179506,
+    "node": "00009373"
+   },
+   {
+    "id": "takasaki",
+    "name": "Takasaki",
+    "jp": "高崎",
+    "lat": 36.322466,
+    "lon": 139.012631,
+    "node": "00002569"
+   },
+   {
+    "id": "annakaharuna",
+    "name": "Annakaharuna",
+    "jp": "安中榛名",
+    "lat": 36.362551,
+    "lon": 138.849214,
+    "node": "00000279"
+   },
+   {
+    "id": "karuizawa",
+    "name": "Karuizawa",
+    "jp": "軽井沢",
+    "lat": 36.342636,
+    "lon": 138.635179,
+    "node": "00002048"
+   },
+   {
+    "id": "sakudaira",
+    "name": "Sakudaira",
+    "jp": "佐久平",
+    "lat": 36.278008,
+    "lon": 138.464252,
+    "node": "00002776"
+   },
+   {
+    "id": "ueda",
+    "name": "Ueda",
+    "jp": "上田",
+    "lat": 36.396602,
+    "lon": 138.249344,
+    "node": "00004027"
+   },
+   {
+    "id": "nagano",
+    "name": "Nagano",
+    "jp": "長野",
+    "lat": 36.643009,
+    "lon": 138.188673,
+    "node": "00006275"
+   },
+   {
+    "id": "iiyama",
+    "name": "Iiyama",
+    "jp": "飯山",
+    "lat": 36.845561,
+    "lon": 138.358641,
+    "node": "00007617"
+   },
+   {
+    "id": "joetsumyoko",
+    "name": "Joetsu-myoko",
+    "jp": "上越妙高",
+    "lat": 37.081514,
+    "lon": 138.24821,
+    "node": "00009136"
+   }
+  ],
+  "stops": {
+   "kagayaki": [
+    0,
+    1,
+    2,
+    10
+   ],
+   "hakutaka": [
+    0,
+    1,
+    2,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "asama": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ]
+  }
+ }
+}

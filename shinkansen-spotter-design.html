@@ -110,9 +110,9 @@
   .eta{color:var(--board-dim); font-size:13px;}
   .badges{margin-top:10px; display:flex; gap:12px; flex-wrap:wrap; font-size:13px; font-weight:700; letter-spacing:.04em;}
   .badge{display:inline-block;}
-  .badge.nozomi{color:var(--nozomi);}
-  .badge.hikari{color:var(--hikari);}
-  .badge.kodama{color:var(--kodama);}
+  .badge.ltd{color:var(--amber-board);}   /* premier express: Nozomi / Mizuho / Hayabusa / Kagayaki */
+  .badge.rapid{color:var(--red-board);}   /* Hikari / Sakura / Hayate / Komachi / Hakutaka … */
+  .badge.local{color:var(--tokaido-board);} /* all-stops: Kodama / Tsubame / Nasuno / Asama … */
   .badge.dir{color:var(--board-txt);}
   .passline{margin-top:12px; font-size:13px; font-weight:500; color:var(--board-txt);}
   .passline .a{color:var(--amber-board);} .passline .b{color:var(--led);}
@@ -186,7 +186,7 @@
       <span class="line-chip" aria-hidden="true"></span>
       <div>
         <h1>Shinkansen Spotter</h1>
-        <span class="sub">Tokaido Line 東海道新幹線</span>
+        <span class="sub" id="lineName">Japan bullet trains</span>
       </div>
     </div>
     <div class="mast-right">
@@ -251,152 +251,158 @@
   </div>
 </div>
 
-<!-- engine (inlined) -->
+<!-- data + engine inlined so this file is standalone & editable -->
+<script>
+(function(root,factory){const m=factory();if(typeof module!=="undefined"&&module.exports)module.exports=m;root.SpotterLines=m;})(typeof self!=="undefined"?self:this,function(){return {"LINES":{"tokaido":{"lineId":"00000110","stations":[{"id":"tokyo","name":"Tokyo","jp":"東京","lat":35.681041,"lon":139.767106,"node":"00006668"},{"id":"shinagawa","name":"Shinagawa","jp":"品川","lat":35.628431,"lon":139.73903,"node":"00007825"},{"id":"shinyokohama","name":"Shin-Yokohama","jp":"新横浜","lat":35.507399,"lon":139.617672,"node":"00004179"},{"id":"odawara","name":"Odawara","jp":"小田原","lat":35.256246,"lon":139.154674,"node":"00003742"},{"id":"atami","name":"Atami","jp":"熱海","lat":35.103654,"lon":139.0778,"node":"00007326"},{"id":"mishima","name":"Mishima","jp":"三島","lat":35.126222,"lon":138.911046,"node":"00003056"},{"id":"shinfujishizuoka","name":"Shin-fuji(Shizuoka)","jp":"新富士(静岡県)","lat":35.142103,"lon":138.66338,"node":"00004358"},{"id":"shizuoka","name":"Shizuoka","jp":"静岡","lat":34.971754,"lon":138.389027,"node":"00004995"},{"id":"kakegawa","name":"Kakegawa","jp":"掛川","lat":34.76925,"lon":138.014893,"node":"00001232"},{"id":"hamamatsu","name":"Hamamatsu","jp":"浜松","lat":34.703819,"lon":137.734701,"node":"00007841"},{"id":"toyohashi","name":"Toyohashi","jp":"豊橋","lat":34.762809,"lon":137.381668,"node":"00008206"},{"id":"mikawanjo","name":"Mikawanjo","jp":"三河安城","lat":34.970266,"lon":137.06147,"node":"00002968"},{"id":"nagoya","name":"Nagoya","jp":"名古屋","lat":35.17068,"lon":136.881638,"node":"00008576"},{"id":"gifuhashima","name":"Gifuhashima","jp":"岐阜羽島","lat":35.315702,"lon":136.685656,"node":"00001468"},{"id":"maibara","name":"Maibara","jp":"米原","lat":35.314721,"lon":136.289839,"node":"00008117"},{"id":"kyoto","name":"Kyoto","jp":"京都","lat":34.985237,"lon":135.758504,"node":"00001756"},{"id":"shinosaka","name":"Shin-osaka","jp":"新大阪","lat":34.734018,"lon":135.501756,"node":"00004305"}],"stops":{"nozomi":[0,1,2,12,15,16],"hikari":[0,1,2,3,4,5,7,9,10,12,13,14,15,16],"kodama":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]},"name":"Tokaido","jp":"東海道","express":"nozomi","types":["nozomi","hikari","kodama"],"hubs":[0,1,2,12,15,16]},"sanyo":{"lineId":"00000069","stations":[{"id":"shinosaka","name":"Shin-osaka","jp":"新大阪","lat":34.73341,"lon":135.499943,"node":"00004305"},{"id":"shinkobe","name":"Shin-kobe","jp":"新神戸","lat":34.706464,"lon":135.195759,"node":"00004269"},{"id":"nishiakashi","name":"Nishiakashi","jp":"西明石","lat":34.666841,"lon":134.960352,"node":"00004947"},{"id":"himeji","name":"Himeji","jp":"姫路","lat":34.826758,"lon":134.690513,"node":"00007808"},{"id":"aioihyogo","name":"Aioi(Hyogo)","jp":"相生(兵庫県)","lat":34.818059,"lon":134.473933,"node":"00005382"},{"id":"okayama","name":"Okayama","jp":"岡山","lat":34.665975,"lon":133.917634,"node":"00000859"},{"id":"shinkurashiki","name":"Shin-kurashiki","jp":"新倉敷","lat":34.565088,"lon":133.678542,"node":"00004298"},{"id":"fukuyama","name":"Fukuyama","jp":"福山","lat":34.489471,"lon":133.362699,"node":"00008021"},{"id":"shinonomichi","name":"Shin-onomichi","jp":"新尾道","lat":34.429971,"lon":133.190251,"node":"00004353"},{"id":"mihara","name":"Mihara","jp":"三原","lat":34.400602,"lon":133.083022,"node":"00003005"},{"id":"higashihiroshima","name":"Higashihiroshima","jp":"東広島","lat":34.389273,"lon":132.759646,"node":"00006690"},{"id":"hiroshima","name":"Hiroshima","jp":"広島","lat":34.398176,"lon":132.475861,"node":"00002397"},{"id":"shiniwakuni","name":"Shin-iwakuni","jp":"新岩国","lat":34.164814,"lon":132.149762,"node":"00004201"},{"id":"tokuyama","name":"Tokuyama","jp":"徳山","lat":34.050628,"lon":131.802373,"node":"00006979"},{"id":"shinyamaguchi","name":"Shin-Yamaguchi","jp":"新山口","lat":34.093781,"lon":131.396293,"node":"00003671"},{"id":"asa","name":"Asa","jp":"厚狭","lat":34.05373,"lon":131.159989,"node":"00002343"},{"id":"shinshimonoseki","name":"Shin-shimonoseki","jp":"新下関","lat":34.005737,"lon":130.948631,"node":"00004184"},{"id":"kokurafukuoka","name":"Kokura(Fukuoka)","jp":"小倉(福岡県)","lat":33.886904,"lon":130.882523,"node":"00003716"},{"id":"hakata","name":"Hakata","jp":"博多","lat":33.589806,"lon":130.420652,"node":"00007420"}],"stops":{"mizuho":[0,1,3,5,7,11,14,17,18],"hikari":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18],"sakura":[0,1,2,3,5,7,11,13,14,16,17,18],"kodama":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],"nozomi":[0,1,2,3,5,7,11,13,14,17,18],"tsubame":[16,17,18]},"name":"Sanyo","jp":"山陽","express":"mizuho","types":["mizuho","hikari","sakura","kodama","nozomi","tsubame"],"hubs":[0,1,3,5,7,11,14,17,18]},"tohoku":{"lineId":"00000185","stations":[{"id":"tokyo","name":"Tokyo","jp":"東京","lat":35.681041,"lon":139.767106,"node":"00006668"},{"id":"ueno","name":"Ueno","jp":"上野","lat":35.713365,"lon":139.776703,"node":"00004067"},{"id":"omiyasaitama","name":"Omiya (Saitama)","jp":"大宮(埼玉県)","lat":35.906266,"lon":139.623602,"node":"00005564"},{"id":"oyama","name":"Oyama","jp":"小山","lat":36.313145,"lon":139.806449,"node":"00003687"},{"id":"utsunomiya","name":"Utsunomiya","jp":"宇都宮","lat":36.559056,"lon":139.898357,"node":"00000522"},{"id":"nasushiobara","name":"Nasushiobara","jp":"那須塩原","lat":36.931818,"lon":140.020795,"node":"00007009"},{"id":"shinshirakawa","name":"Shin-shirakawa","jp":"新白河","lat":37.122519,"lon":140.188146,"node":"00004347"},{"id":"koriyamafukushima","name":"Koriyama(Fukushima)","jp":"郡山(福島県)","lat":37.39815,"lon":140.38846,"node":"00002012"},{"id":"fukushimafukushima","name":"Fukushima(Fukushima)","jp":"福島(福島県)","lat":37.754211,"lon":140.45991,"node":"00008031"},{"id":"shiroishizao","name":"Shiroishizao","jp":"白石蔵王","lat":37.995192,"lon":140.63296,"node":"00007462"},{"id":"sendai","name":"Sendai","jp":"仙台","lat":38.260252,"lon":140.882056,"node":"00005125"},{"id":"furukawa","name":"Furukawa","jp":"古川","lat":38.570542,"lon":140.967717,"node":"00002171"},{"id":"kurikomakogen","name":"Kurikomakogen","jp":"くりこま高原","lat":38.749042,"lon":141.071786,"node":"00000052"},{"id":"ichinoseki","name":"Ichinoseki","jp":"一ノ関","lat":38.926693,"lon":141.139212,"node":"00000445"},{"id":"mizusawaesashi","name":"Mizusawaesashi","jp":"水沢江刺","lat":39.145327,"lon":141.188736,"node":"00004567"},{"id":"kitakami","name":"Kitakami","jp":"北上","lat":39.281477,"lon":141.122211,"node":"00008335"},{"id":"shinhanamaki","name":"Shin-hanamaki","jp":"新花巻","lat":39.406729,"lon":141.17381,"node":"00004189"},{"id":"morioka","name":"Morioka","jp":"盛岡","lat":39.701596,"lon":141.1366,"node":"00004689"},{"id":"iwatenumakunai","name":"Iwatenumakunai","jp":"いわて沼宮内","lat":39.96071,"lon":141.217571,"node":"00003885"},{"id":"ninohe","name":"Ninohe","jp":"二戸","lat":40.260026,"lon":141.285715,"node":"00007194"},{"id":"hachinohe","name":"Hachinohe","jp":"八戸","lat":40.509422,"lon":141.430985,"node":"00007520"},{"id":"shichinohetowada","name":"Shichinohe-Towada","jp":"七戸十和田","lat":40.720063,"lon":141.153417,"node":"00009591"},{"id":"shinaomori","name":"Shin-Aomori","jp":"新青森","lat":40.828106,"lon":140.693469,"node":"00004283"}],"stops":{"yamabiko":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17],"tsubasa":[0,1,2,4,7,8],"hayabusa":[0,1,2,10,11,12,13,14,15,16,17,18,19,20,21,22],"komachi":[0,1,2,10,11,12,13,14,15,16,17],"nasuno":[0,1,2,3,4,5,6,7],"hayate":[17,19,20,21,22]},"name":"Tohoku","jp":"東北","express":"hayabusa","types":["yamabiko","tsubasa","hayabusa","komachi","nasuno","hayate"],"hubs":[0,1,2,10,17,22]},"kyushu":{"lineId":"00001017","stations":[{"id":"hakata","name":"Hakata","jp":"博多","lat":33.589806,"lon":130.420652,"node":"00007420"},{"id":"shintosu","name":"Shin-tosu","jp":"新鳥栖","lat":33.369804,"lon":130.491462,"node":"00009595"},{"id":"kurume","name":"Kurume","jp":"久留米","lat":33.320184,"lon":130.501331,"node":"00001628"},{"id":"chikugofunagoya","name":"Chikugofunagoya","jp":"筑後船小屋","lat":33.178243,"lon":130.49171,"node":"00005292"},{"id":"shinomuta","name":"Shin-omuta","jp":"新大牟田","lat":33.071267,"lon":130.488726,"node":"00009594"},{"id":"shintamana","name":"Shin-tamana","jp":"新玉名","lat":32.942522,"lon":130.573574,"node":"00009593"},{"id":"kumamoto","name":"Kumamoto","jp":"熊本","lat":32.790202,"lon":130.688728,"node":"00001969"},{"id":"shinyatsushiro","name":"Shin-yatsushiro","jp":"新八代","lat":32.518286,"lon":130.634255,"node":"00009371"},{"id":"shinminamata","name":"Shin-minamata","jp":"新水俣","lat":32.210733,"lon":130.428846,"node":"00009370"},{"id":"izumi","name":"Izumi","jp":"出水","lat":32.089691,"lon":130.358164,"node":"00003572"},{"id":"sendaikagoshima","name":"Sendai(Kagoshima)","jp":"川内(鹿児島県)","lat":31.813711,"lon":130.312222,"node":"00005235"},{"id":"kagoshimachuo","name":"Kagoshima-chuo","jp":"鹿児島中央","lat":31.583803,"lon":130.541714,"node":"00004786"}],"stops":{"tsubame":[0,1,2,3,4,5,6,7,8,9,10,11],"sakura":[0,1,2,3,4,5,6,7,8,9,10,11],"mizuho":[0,2,6,10,11]},"name":"Kyushu","jp":"九州","express":"mizuho","types":["tsubame","sakura","mizuho"],"hubs":[0,2,6,10,11]},"hokuriku":{"lineId":"00000177","stations":[{"id":"tokyo","name":"Tokyo","jp":"東京","lat":35.681041,"lon":139.767106,"node":"00006668"},{"id":"ueno","name":"Ueno","jp":"上野","lat":35.713365,"lon":139.776703,"node":"00004067"},{"id":"omiyasaitama","name":"Omiya (Saitama)","jp":"大宮(埼玉県)","lat":35.906266,"lon":139.623602,"node":"00005564"},{"id":"kumagaya","name":"Kumagaya","jp":"熊谷","lat":36.139534,"lon":139.389531,"node":"00001968"},{"id":"honjowaseda","name":"Honjowaseda","jp":"本庄早稲田","lat":36.218826,"lon":139.179506,"node":"00009373"},{"id":"takasaki","name":"Takasaki","jp":"高崎","lat":36.322466,"lon":139.012631,"node":"00002569"},{"id":"annakaharuna","name":"Annakaharuna","jp":"安中榛名","lat":36.362551,"lon":138.849214,"node":"00000279"},{"id":"karuizawa","name":"Karuizawa","jp":"軽井沢","lat":36.342636,"lon":138.635179,"node":"00002048"},{"id":"sakudaira","name":"Sakudaira","jp":"佐久平","lat":36.278008,"lon":138.464252,"node":"00002776"},{"id":"ueda","name":"Ueda","jp":"上田","lat":36.396602,"lon":138.249344,"node":"00004027"},{"id":"nagano","name":"Nagano","jp":"長野","lat":36.643009,"lon":138.188673,"node":"00006275"},{"id":"iiyama","name":"Iiyama","jp":"飯山","lat":36.845561,"lon":138.358641,"node":"00007617"},{"id":"joetsumyoko","name":"Joetsu-myoko","jp":"上越妙高","lat":37.081514,"lon":138.24821,"node":"00009136"}],"stops":{"kagayaki":[0,1,2,10],"hakutaka":[0,1,2,5,7,8,9,10,11,12],"asama":[0,1,2,3,4,5,6,7,8,9,10]},"name":"Hokuriku","jp":"北陸","express":"hakutaka","types":["kagayaki","hakutaka","asama"],"hubs":[0,1,2,10,12]}},"TYPE_META":{"nozomi":{"en":"Nozomi","jp":"のぞみ","cls":"ltd","cruise":285,"dwell":1.5},"hikari":{"en":"Hikari","jp":"ひかり","cls":"rapid","cruise":270,"dwell":1.5},"kodama":{"en":"Kodama","jp":"こだま","cls":"local","cruise":230,"dwell":1},"mizuho":{"en":"Mizuho","jp":"みずほ","cls":"ltd","cruise":300,"dwell":1.5},"sakura":{"en":"Sakura","jp":"さくら","cls":"rapid","cruise":285,"dwell":1.5},"tsubame":{"en":"Tsubame","jp":"つばめ","cls":"local","cruise":260,"dwell":1},"yamabiko":{"en":"Yamabiko","jp":"やまびこ","cls":"local","cruise":275,"dwell":1},"tsubasa":{"en":"Tsubasa","jp":"つばさ","cls":"rapid","cruise":275,"dwell":1},"hayabusa":{"en":"Hayabusa","jp":"はやぶさ","cls":"ltd","cruise":320,"dwell":1.5},"komachi":{"en":"Komachi","jp":"こまち","cls":"rapid","cruise":320,"dwell":1},"nasuno":{"en":"Nasuno","jp":"なすの","cls":"local","cruise":240,"dwell":1},"hayate":{"en":"Hayate","jp":"はやて","cls":"rapid","cruise":275,"dwell":1.5},"kagayaki":{"en":"Kagayaki","jp":"かがやき","cls":"ltd","cruise":260,"dwell":1},"hakutaka":{"en":"Hakutaka","jp":"はくたか","cls":"rapid","cruise":260,"dwell":1},"asama":{"en":"Asama","jp":"あさま","cls":"local","cruise":260,"dwell":1}}};});
+
+</script>
 <script>
 /* =========================================================================
-   engine.js — מנוע הלו"ז המשותף של "צייד שינקנסן".
-   עובד גם בדפדפן (window.Spotter) וגם ב-Node (module.exports).
+   engine.js — multi-line Shinkansen engine. Works in the browser
+   (window.Spotter) and in Node (module.exports).
 
-   זהו "מקור האמת" היחיד: נתוני התחנות, דפוסי העצירה, חישוב אירועי מעבר,
-   זיהוי כיוון/מצפן וזיהוי חסימה. גם הסימולציה וגם מסלול ה-Bright Data
-   החי מחזירים אירועים באותו פורמט: { type, dir, timeMin, stops }.
+   Station/stop data comes from lines-data.js (SpotterLines). This file holds
+   only the shared logic: geometry, nearest-station, deterministic simulation
+   fallback, distance interpolation for pass-through times, and blocking
+   detection. Every line is handled the same way via line "views".
+
+   Event format (sim + live): { type, dir, timeMin, stops, dest?, platform? }.
    ========================================================================= */
 (function (root, factory) {
-  const api = factory();
-  if (typeof module !== "undefined" && module.exports) module.exports = api; // Node
-  root.Spotter = api;                                                        // Browser
-})(typeof self !== "undefined" ? self : this, function () {
+  const api = factory(
+    (typeof self !== "undefined" && self.SpotterLines) ? self.SpotterLines :
+    (typeof require !== "undefined" ? require("./lines-data.js") : root.SpotterLines)
+  );
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  root.Spotter = api;
+})(typeof self !== "undefined" ? self : this, function (DATA) {
   "use strict";
 
-  /* Tokaido Shinkansen — index 0 = Tokyo (east) to Shin-Osaka (west). */
-  const STATIONS = [
-    { id:"tokyo",       name:"Tokyo",        jp:"東京",     lat:35.6812, lon:139.7671 },
-    { id:"shinagawa",   name:"Shinagawa",    jp:"品川",     lat:35.6285, lon:139.7387 },
-    { id:"shinyokohama",name:"Shin-Yokohama",jp:"新横浜",   lat:35.5079, lon:139.6173 },
-    { id:"odawara",     name:"Odawara",      jp:"小田原",   lat:35.2563, lon:139.1556 },
-    { id:"atami",       name:"Atami",        jp:"熱海",     lat:35.1031, lon:139.0781 },
-    { id:"mishima",     name:"Mishima",      jp:"三島",     lat:35.1267, lon:138.9111 },
-    { id:"shinfuji",    name:"Shin-Fuji",    jp:"新富士",   lat:35.1417, lon:138.6633 },
-    { id:"shizuoka",    name:"Shizuoka",     jp:"静岡",     lat:34.9719, lon:138.3886 },
-    { id:"kakegawa",    name:"Kakegawa",     jp:"掛川",     lat:34.7692, lon:137.9986 },
-    { id:"hamamatsu",   name:"Hamamatsu",    jp:"浜松",     lat:34.7036, lon:137.7347 },
-    { id:"toyohashi",   name:"Toyohashi",    jp:"豊橋",     lat:34.7628, lon:137.3819 },
-    { id:"mikawaanjo",  name:"Mikawa-Anjo",  jp:"三河安城", lat:34.9367, lon:137.0594 },
-    { id:"nagoya",      name:"Nagoya",       jp:"名古屋",   lat:35.1706, lon:136.8816 },
-    { id:"gifuhashima", name:"Gifu-Hashima", jp:"岐阜羽島", lat:35.3156, lon:136.6861 },
-    { id:"maibara",     name:"Maibara",      jp:"米原",     lat:35.3147, lon:136.2894 },
-    { id:"kyoto",       name:"Kyoto",        jp:"京都",     lat:34.9858, lon:135.7589 },
-    { id:"shinosaka",   name:"Shin-Osaka",   jp:"新大阪",   lat:34.7333, lon:135.5003 },
-  ];
-  const N = STATIONS.length;
+  const LINES = DATA.LINES, TYPE_META = DATA.TYPE_META;
+  const LINE_KEYS = Object.keys(LINES);
 
-  /* דפוסי עצירה אמיתיים (index בקו) לכל סוג רכבת */
-  const STOPS = {
-    nozomi: new Set([0,1,2,12,15,16]),
-    hikari: new Set([0,1,2,3,7,12,14,15,16]),
-    kodama: new Set(Array.from({length:N}, (_,i)=>i)),
-  };
-  const TRAIN_META = {
-    nozomi:{ label:"のぞみ Nozomi", cls:"nozomi", cruise:285, dwell:1.5 },
-    hikari:{ label:"ひかり Hikari", cls:"hikari", cruise:255, dwell:2.0 },
-    kodama:{ label:"こだま Kodama", cls:"kodama", cruise:220, dwell:1.0 },
-  };
-  const SCHEDULE = [
-    { type:"nozomi", headway:10, downOffset:0,  upOffset:5  },
-    { type:"hikari", headway:30, downOffset:8,  upOffset:23 },
-    { type:"kodama", headway:20, downOffset:3,  upOffset:13 },
-  ];
-  const SERVICE_START = 6*60, SERVICE_END = 23*60;
-
-  /* ---------- גאומטריה ---------- */
-  const R = 6371, toRad = d=>d*Math.PI/180, toDeg = r=>r*180/Math.PI;
-  function haversine(a,b){
-    const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
-    const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
-    return 2*R*Math.asin(Math.sqrt(s));
+  /* ---------- geometry ---------- */
+  const R = 6371, toRad = d => d * Math.PI / 180, toDeg = r => r * 180 / Math.PI;
+  function haversine(a, b) {
+    const dLat = toRad(b.lat - a.lat), dLon = toRad(b.lon - a.lon);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
   }
-  function bearing(a,b){
-    const y=Math.sin(toRad(b.lon-a.lon))*Math.cos(toRad(b.lat));
-    const x=Math.cos(toRad(a.lat))*Math.sin(toRad(b.lat))
-          - Math.sin(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.cos(toRad(b.lon-a.lon));
-    return (toDeg(Math.atan2(y,x))+360)%360;
+  function bearing(a, b) {
+    const y = Math.sin(toRad(b.lon - a.lon)) * Math.cos(toRad(b.lat));
+    const x = Math.cos(toRad(a.lat)) * Math.sin(toRad(b.lat))
+            - Math.sin(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.cos(toRad(b.lon - a.lon));
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
   }
-  const COMPASS_EN = ["N","NE","E","SE","S","SW","W","NW"];
-  const compass = deg => COMPASS_EN[Math.round(deg/45)%8];
+  const COMPASS_EN = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const compass = deg => COMPASS_EN[Math.round(deg / 45) % 8];
 
-  const CUM = (()=>{ const c=[0]; for(let i=1;i<N;i++) c[i]=c[i-1]+haversine(STATIONS[i-1],STATIONS[i]); return c; })();
-
-  /* ---------- סימולציה דטרמיניסטית (fallback / מצב offline) ---------- */
-  function eventTime(type, dir, baseMin, idx){
-    const m=TRAIN_META[type], stops=STOPS[type];
-    let distKm, lo, hi;
-    if(dir==="down"){ distKm=CUM[idx]-CUM[0]; lo=1; hi=idx; }
-    else            { distKm=CUM[N-1]-CUM[idx]; lo=idx+1; hi=N-2; }
-    let travel = distKm/m.cruise*60;
-    for(let i=lo;i<=hi;i++) if(stops.has(i)) travel += m.dwell;
-    return baseMin + travel;
+  function meta(type) {
+    return TYPE_META[type] || { en: type, jp: type, cls: "rapid", cruise: 270, dwell: 1.5 };
   }
-  function buildSimEvents(idx){
-    const out=[];
-    for(const s of SCHEDULE){
-      for(const dir of ["down","up"]){
-        const off = dir==="down" ? s.downOffset : s.upOffset;
-        for(let base=SERVICE_START+off; base<=SERVICE_END; base+=s.headway){
-          const t=eventTime(s.type,dir,base,idx);
-          if(t<SERVICE_START || t>SERVICE_END+30) continue;
-          out.push({ type:s.type, dir, timeMin:t, stops:STOPS[s.type].has(idx) });
+
+  /* cumulative along-line distance for a station list */
+  function cumOf(stations) {
+    const c = [0];
+    for (let i = 1; i < stations.length; i++) c[i] = c[i - 1] + haversine(stations[i - 1], stations[i]);
+    return c;
+  }
+
+  /* ---------- per-line "view": all the data + bound helpers for one line ---------- */
+  const viewCache = {};
+  function line(key) {
+    if (viewCache[key]) return viewCache[key];
+    const L = LINES[key];
+    if (!L) return null;
+    const stations = L.stations, N = stations.length, CUM = cumOf(stations);
+    const STOPS = {}; for (const t of L.types) STOPS[t] = new Set(L.stops[t]);
+    const express = L.express, HUBS = (L.hubs || []).slice().sort((a, b) => a - b);
+
+    function indexOfId(id) { return stations.findIndex(s => s.id === id); }
+
+    /* deterministic simulation (offline fallback) — one stream per train type */
+    function buildSimEvents(idx) {
+      const out = [], SERVICE_START = 360, SERVICE_END = 1380;
+      let off = 0;
+      for (const type of L.types) {
+        const m = meta(type), stopSet = STOPS[type];
+        const headway = m.cls === "ltd" ? 12 : m.cls === "rapid" ? 24 : 30;
+        for (const dir of ["down", "up"]) {
+          const o = off + (dir === "down" ? 0 : Math.round(headway / 2));
+          for (let base = SERVICE_START + o; base <= SERVICE_END; base += headway) {
+            // travel time from the relevant terminal to idx along the line
+            let distKm, lo, hi;
+            if (dir === "down") { distKm = CUM[idx] - CUM[0]; lo = 1; hi = idx; }
+            else { distKm = CUM[N - 1] - CUM[idx]; lo = idx + 1; hi = N - 2; }
+            let t = base + distKm / m.cruise * 60;
+            for (let i = lo; i <= hi; i++) if (stopSet.has(i)) t += m.dwell;
+            if (t < SERVICE_START || t > SERVICE_END + 30) continue;
+            out.push({ type, dir, timeMin: t, stops: stopSet.has(idx) });
+          }
+        }
+        off += 3;
+      }
+      out.sort((a, b) => a.timeMin - b.timeMin);
+      return out;
+    }
+
+    /* interpolate a pass-through time at idx from two bracketing stop times */
+    function interpolatePass(schedule, idx, dir) {
+      const pts = schedule.slice().sort((a, b) => dir === "down" ? a.idx - b.idx : b.idx - a.idx);
+      for (let k = 0; k < pts.length - 1; k++) {
+        const a = pts[k], b = pts[k + 1];
+        const lo = Math.min(a.idx, b.idx), hi = Math.max(a.idx, b.idx);
+        if (idx > lo && idx < hi) {
+          const frac = (CUM[idx] - CUM[lo]) / (CUM[hi] - CUM[lo]);
+          const tLo = a.idx === lo ? a.timeMin : b.timeMin;
+          const tHi = a.idx === hi ? a.timeMin : b.timeMin;
+          return tLo + frac * (tHi - tLo);
         }
       }
+      return null;
     }
-    out.sort((a,b)=>a.timeMin-b.timeMin);
-    return out;
+
+    function approachBearing(idx, dir) {
+      if (dir === "down") { const p = Math.max(0, idx - 1); return bearing(stations[idx], stations[p]); }
+      const p = Math.min(N - 1, idx + 1); return bearing(stations[idx], stations[p]);
+    }
+
+    return (viewCache[key] = {
+      key, name: L.name, jp: L.jp, lineId: L.lineId,
+      STATIONS: stations, N, CUM, STOPS, types: L.types, express, HUBS,
+      hubs: () => HUBS,
+      isHub: idx => HUBS.indexOf(idx) >= 0,
+      indexOfId, buildSimEvents, interpolatePass, approachBearing,
+    });
   }
 
-  /* ---------- אינטרפולציית זמן-מעבר מנתוני scraping אמיתיים ----------
-     בהינתן לו"ז אמיתי של רכבת אחת (זמנים בתחנות שבהן היא כן עוצרת),
-     מחשבים מתי היא חולפת בתחנה idx (שבה היא לא עוצרת) לפי מרחק יחסי
-     בין שתי תחנות העצירה שעוטפות אותה.
-     schedule = [{ idx, timeMin }] ממויין; dir = "down" | "up".          */
-  function interpolatePass(schedule, idx, dir){
-    const pts = schedule.slice().sort((a,b)=> dir==="down" ? a.idx-b.idx : b.idx-a.idx);
-    for(let k=0;k<pts.length-1;k++){
-      const a=pts[k], b=pts[k+1];
-      const lo=Math.min(a.idx,b.idx), hi=Math.max(a.idx,b.idx);
-      if(idx>lo && idx<hi){
-        const frac=(CUM[idx]-CUM[lo])/(CUM[hi]-CUM[lo]);
-        const tLo = a.idx===lo ? a.timeMin : b.timeMin;
-        const tHi = a.idx===hi ? a.timeMin : b.timeMin;
-        return tLo + frac*(tHi-tLo);
+  /* nearest station across every line */
+  function nearestStation(lat, lon) {
+    let best = { lineKey: LINE_KEYS[0], idx: 0, dist: Infinity };
+    for (const key of LINE_KEYS) {
+      const sts = LINES[key].stations;
+      for (let i = 0; i < sts.length; i++) {
+        const d = haversine({ lat, lon }, sts[i]);
+        if (d < best.dist) best = { lineKey: key, idx: i, dist: d };
       }
     }
-    return null; // התחנה מחוץ לטווח הלו"ז שנסרק
+    return best;
   }
 
-  /* ---------- כיוון/מצפן + זיהוי חסימה (משותף לכל המקורות) ---------- */
-  function approachBearing(idx, dir){
-    if(dir==="down"){ const p=Math.max(0,idx-1); return bearing(STATIONS[idx],STATIONS[p]); }
-    const p=Math.min(N-1,idx+1); return bearing(STATIONS[idx],STATIONS[p]);
-  }
-  function blockingTrain(events, t, dir){
-    for(const e of events){
-      if(!e.stops || e.dir!==dir) continue;
-      const dwell = e.type==="kodama" ? 6 : (TRAIN_META[e.type]?.dwell ?? 1.5);
-      if(t>=e.timeMin-0.3 && t<=e.timeMin+dwell+0.3) return { type:e.type, until:e.timeMin+dwell, platform:e.platform };
+  /* a stopping train (same direction) that may block the shot while it dwells */
+  function blockingTrain(events, t, dir) {
+    for (const e of events) {
+      if (!e.stops || e.dir !== dir) continue;
+      const dwell = (meta(e.type).dwell || 1.5) + (meta(e.type).cls === "local" ? 4 : 0);
+      if (t >= e.timeMin - 0.3 && t <= e.timeMin + dwell + 0.3) return { type: e.type, until: e.timeMin + dwell, platform: e.platform };
     }
     return null;
   }
-  function nearestStation(lat,lon){
-    let best=0,bd=Infinity;
-    for(let i=0;i<N;i++){ const d=haversine({lat,lon},STATIONS[i]); if(d<bd){bd=d;best=i;} }
-    return { idx:best, dist:bd };
-  }
 
   return {
-    STATIONS, STOPS, TRAIN_META, SCHEDULE, N, CUM,
-    SERVICE_START, SERVICE_END,
-    haversine, bearing, compass, approachBearing,
-    buildSimEvents, interpolatePass, blockingTrain, nearestStation,
-    indexOfId: id => STATIONS.findIndex(s=>s.id===id),
+    LINES, TYPE_META, LINE_KEYS,
+    line, nearestStation, blockingTrain,
+    haversine, bearing, compass, meta,
   };
 });
 
@@ -406,10 +412,12 @@
 const S = window.Spotter;
 const $ = id => document.getElementById(id);
 
+let lineKey = null, V = null;          // current line + its view
 let stationIdx = null;                 // chosen from GPS on load; null = still locating
-const FALLBACK_ID = "odawara";         // used only if geolocation is denied/unavailable
+const FALLBACK = { line: "tokaido", id: "odawara" };  // only if location is denied/unavailable
 let events = [];
 let deviceHeading = null;
+function label(type){ const m = S.meta(type); return m.jp + " " + m.en; }
 
 // Timetables are Japan time, so compute "now" in Asia/Tokyo regardless of the device clock.
 function jstParts(){
@@ -424,22 +432,22 @@ function fmtCountdown(mins){
   if(t>=3600) return Math.floor(t/3600)+"h "+String(Math.floor((t%3600)/60)).padStart(2,"0")+"m";
   return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");
 }
-function terminalName(dir){ return dir==="down" ? S.STATIONS[S.N-1].name : S.STATIONS[0].name; }
-function fromIdxOf(idx, dir){ return dir==="down" ? Math.max(0, idx-1) : Math.min(S.N-1, idx+1); }
-function toIdxOf(idx, dir){ return dir==="down" ? Math.min(S.N-1, idx+1) : Math.max(0, idx-1); }
+function terminalName(dir){ return dir==="down" ? V.STATIONS[V.N-1].name : V.STATIONS[0].name; }
+function fromIdxOf(idx, dir){ return dir==="down" ? Math.max(0, idx-1) : Math.min(V.N-1, idx+1); }
+function toIdxOf(idx, dir){ return dir==="down" ? Math.min(V.N-1, idx+1) : Math.max(0, idx-1); }
 
 let loadSeq = 0;
 async function loadEvents(){
-  if(stationIdx==null) return;
-  const seq = ++loadSeq;       // drop out-of-order responses when switching stations fast
+  if(!V || stationIdx==null) return;
+  const seq = ++loadSeq;       // drop out-of-order responses when switching station/line fast
   let live = false, got = null;
   try{
-    const r = await fetch("/api/next-trains?station="+S.STATIONS[stationIdx].id);
+    const r = await fetch("/api/next-trains?line="+lineKey+"&station="+V.STATIONS[stationIdx].id);
     const j = await r.json();
     if(j.events && j.events.length){ got = j.events; live = j.source === "brightdata"; }
   }catch(e){ /* fall through to local schedule */ }
   if(seq !== loadSeq) return;
-  events = got || S.buildSimEvents(stationIdx);
+  events = got || V.buildSimEvents(stationIdx);
   setStatus(live);
   render();
 }
@@ -449,20 +457,22 @@ function setStatus(live){
   $("statusLbl").className = live ? "live" : "";
 }
 
-/* the ekimeihyo sign: current station + line neighbours (left = Tokyo side) */
+/* the ekimeihyo sign: current station + line neighbours */
 function setSign(idx){
-  const st = S.STATIONS[idx];
+  const st = V.STATIONS[idx];
   $("signKanji").textContent = st.jp;
   $("signRomaji").textContent = st.name;
-  const L = idx>0 ? S.STATIONS[idx-1] : null;
-  const R = idx<S.N-1 ? S.STATIONS[idx+1] : null;
+  const L = idx>0 ? V.STATIONS[idx-1] : null;
+  const R = idx<V.N-1 ? V.STATIONS[idx+1] : null;
   $("signLeft").textContent  = L ? "◀ "+L.name : "";
   $("signRight").textContent = R ? R.name+" ▶" : "";
+  $("lineName").textContent = V.name+" Line "+V.jp+"新幹線";
 }
 
-function selectStation(idx){
-  stationIdx=idx; $("stationSel").value=S.STATIONS[idx].id;
-  $("upStation").textContent = S.STATIONS[idx].name+" "+S.STATIONS[idx].jp;
+function selectStation(lk, idx){
+  lineKey=lk; V=S.line(lk); stationIdx=idx;
+  $("stationSel").value=lk+":"+V.STATIONS[idx].id;
+  $("upStation").textContent = V.STATIONS[idx].name+" "+V.STATIONS[idx].jp;
   setSign(idx);
   loadEvents();
 }
@@ -475,10 +485,10 @@ function setCountdown(mins){
 }
 
 function applyGeometry(ev){
-  const approach = S.approachBearing(stationIdx, ev.dir);
+  const approach = V.approachBearing(stationIdx, ev.dir);
   const toIdx = toIdxOf(stationIdx, ev.dir), fromIdx = fromIdxOf(stationIdx, ev.dir);
-  const exit = S.bearing(S.STATIONS[stationIdx], S.STATIONS[toIdx]);
-  const fromName = S.STATIONS[fromIdx].name, toName = S.STATIONS[toIdx].name;
+  const exit = S.bearing(V.STATIONS[stationIdx], V.STATIONS[toIdx]);
+  const fromName = V.STATIONS[fromIdx].name, toName = V.STATIONS[toIdx].name;
   $("kvFrom").textContent = fromName+" · "+S.compass(approach)+" "+Math.round(approach)+"°";
   $("kvDir").textContent  = toName+" · "+S.compass(exit)+" "+Math.round(exit)+"°";
   $("kvTrack").textContent = ev.dir==="down" ? "Westbound · to "+terminalName("down") : "Eastbound · to "+terminalName("up");
@@ -488,27 +498,25 @@ function applyGeometry(ev){
 
 function render(){
   { const {h,m,s}=jstParts(); $("clock").textContent = [h,m,s].map(n=>String(n).padStart(2,"0")).join(":")+" JST"; }
-  if(stationIdx==null) return;   // still locating — keep the placeholder
+  if(!V || stationIdx==null) return;   // still locating — keep the placeholder
   const t = nowMinutes();
   const future = events.filter(e => e.timeMin>t);
-  const passes = future.filter(e => !e.stops && (e.type==="nozomi"||e.type==="hikari"));
+  const passes = future.filter(e => !e.stops);   // any non-stopping train is a pass-through
   const next = passes[0];
-  const isMajorStop = S.STOPS.nozomi.has(stationIdx);
 
   if(!next){
-    // Nothing passes through here (major stop or end of service) — show
-    // real departures instead of an empty board.
+    // Nothing passes through here (hub or end of service) — show real departures.
     const deps = future.filter(e => e.stops);
     const d = deps[0];
     if(d){
-      const m=S.TRAIN_META[d.type], dest=d.dest||terminalName(d.dir);
+      const m=S.meta(d.type), dest=d.dest||terminalName(d.dir);
       $("heroLabel").textContent = "Next departure";
       setCountdown(d.timeMin-t);
-      $("heroEta").textContent = "Departs at "+fmtClock(d.timeMin)+" · "+m.label+(d.platform!=null?" · Platform "+d.platform:"");
+      $("heroEta").textContent = "Departs at "+fmtClock(d.timeMin)+" · "+label(d.type)+(d.platform!=null?" · Platform "+d.platform:"");
       $("heroBadges").innerHTML =
-        `<span class="badge ${m.cls}">${m.label}</span>`+
+        `<span class="badge ${m.cls}">${label(d.type)}</span>`+
         `<span class="badge dir">${d.dir==="down"?"▶":"◀"} to ${dest}</span>`;
-      $("heroPass").textContent = isMajorStop ? "Fast trains stop here — try an intermediate station to photograph pass-throughs." : "";
+      $("heroPass").textContent = V.isHub(stationIdx) ? "Trains stop here — try an intermediate station to catch pass-throughs." : "";
       applyGeometry(d);
       $("kvSpeed").textContent = "Stops here";
       setBanner(null);
@@ -528,13 +536,13 @@ function render(){
     return;
   }
 
-  const m=S.TRAIN_META[next.type], dt=next.timeMin-t;
+  const m=S.meta(next.type), dt=next.timeMin-t;
   const dest = next.dest || terminalName(next.dir);
   $("heroLabel").textContent = "Next pass-through";
   setCountdown(dt);
-  $("heroEta").textContent = "Passes at "+fmtClock(next.timeMin)+" · "+m.label;
+  $("heroEta").textContent = "Passes at "+fmtClock(next.timeMin)+" · "+label(next.type);
   $("heroBadges").innerHTML =
-    `<span class="badge ${m.cls}">${m.label}</span>`+
+    `<span class="badge ${m.cls}">${label(next.type)}</span>`+
     `<span class="badge dir">${next.dir==="down"?"▶":"◀"} to ${dest}</span>`;
 
   const g = applyGeometry(next);
@@ -558,9 +566,9 @@ function setBanner(blk){
     $("blockTitle").textContent="Track is clear";
     $("blockDesc").textContent="No standing train should block your shot.";
   } else {
-    const m=S.TRAIN_META[blk.type], plat=(blk.platform!=null)?" at platform "+blk.platform:"";
+    const plat=(blk.platform!=null)?" at platform "+blk.platform:"";
     b.className="banner blocked"; b.querySelector(".ico").textContent="×";
-    $("blockTitle").textContent="A "+m.label.split(" ").pop()+" is stopping"+plat;
+    $("blockTitle").textContent="A "+S.meta(blk.type).en+" is stopping"+plat;
     $("blockDesc").textContent="It may block the view until ~"+fmtClock(blk.until)+". Move to the other side of the platform.";
   }
 }
@@ -569,7 +577,7 @@ function renderList(items, mode){
   const t=nowMinutes(), ul=$("upList"), rows=items.slice(0,7);
   if(!rows.length){ ul.innerHTML='<li class="muted small">Nothing upcoming right now</li>'; return; }
   ul.innerHTML = rows.map(e=>{
-    const m=S.TRAIN_META[e.type], dest=e.dest||terminalName(e.dir);
+    const m=S.meta(e.type), dest=e.dest||terminalName(e.dir);
     let right;
     if(mode==="dep"){
       right = (e.platform!=null ? '<span class="li-plat">Plat. '+e.platform+'</span>' : "")+
@@ -581,7 +589,7 @@ function renderList(items, mode){
         `<span class="li-mins">${Math.round(e.timeMin-t)}m</span>`;
     }
     return `<li><span class="li-left"><span class="li-time">${fmtClock(e.timeMin)}</span>`+
-      `<span class="badge ${m.cls}">${m.label.split(" ").pop()}</span>`+
+      `<span class="badge ${m.cls}">${m.en}</span>`+
       `<span class="small muted">${e.dir==="down"?"▶":"◀"} ${dest}</span></span>`+
       `<span class="li-right">${right}</span></li>`;
   }).join("");
@@ -610,7 +618,7 @@ $("btnCompass").addEventListener("click", enableCompass);
 /* GPS — pick the nearest station to the user. Runs automatically on load
    (so visitors see their own location), and again on demand from the button.
    Falls back to a default station only if location is denied/unavailable. */
-function fallbackIfUnset(){ if(stationIdx==null) selectStation(S.indexOfId(FALLBACK_ID)); }
+function fallbackIfUnset(){ if(stationIdx==null) selectStation(FALLBACK.line, S.line(FALLBACK.line).indexOfId(FALLBACK.id)); }
 
 function locate(auto){
   if(!navigator.geolocation){
@@ -622,17 +630,17 @@ function locate(auto){
   if(stationIdx==null) $("locInfo").textContent="Detecting your location…";
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:lat, longitude:lon}=pos.coords;
-    const {idx,dist}=S.nearestStation(lat,lon);
-    selectStation(idx);
+    const near=S.nearestStation(lat,lon);
+    selectStation(near.lineKey, near.idx);
     const inJapan = lat>24 && lat<46 && lon>122 && lon<154;
     $("btnLocate").textContent="Find my nearest station";
-    $("locInfo").innerHTML = (inJapan?"":"You're not on the Tokaido line — showing the nearest stop as a demo. ")+
-      "Nearest: <b>"+S.STATIONS[idx].name+"</b> ("+S.STATIONS[idx].jp+") · "+dist.toFixed(1)+" km away.";
+    $("locInfo").innerHTML = (inJapan?"":"You're not in Japan — showing the nearest stop as a demo. ")+
+      "Nearest: <b>"+V.STATIONS[near.idx].name+"</b> ("+V.STATIONS[near.idx].jp+") · "+V.name+" Line · "+near.dist.toFixed(1)+" km away.";
   }, err=>{
     $("btnLocate").textContent="Find my nearest station";
     fallbackIfUnset();
     $("locInfo").textContent = auto
-      ? "Couldn't get your location, so showing "+S.STATIONS[stationIdx].name+". Tap “Find my nearest station” or choose above."
+      ? "Couldn't get your location, so showing "+V.STATIONS[stationIdx].name+". Tap “Find my nearest station” or choose above."
       : "Couldn't locate you. Choose a station manually.";
   }, { enableHighAccuracy:true, timeout:10000, maximumAge:60000 });
 }
@@ -640,11 +648,12 @@ $("btnLocate").addEventListener("click", ()=>locate(false));
 
 /* init */
 (function init(){
-  $("stationSel").innerHTML = S.STATIONS.map((st,i)=>{
-    const tag = S.STOPS.nozomi.has(i) ? " — major stop" : (S.STOPS.hikari.has(i) ? "" : " · photo spot");
-    return `<option value="${st.id}">${st.name} ${st.jp}${tag}</option>`;
+  $("stationSel").innerHTML = S.LINE_KEYS.map(lk=>{
+    const v=S.line(lk);
+    const opts=v.STATIONS.map((st,i)=>`<option value="${lk}:${st.id}">${st.name} ${st.jp}${v.isHub(i)?" — hub":""}</option>`).join("");
+    return `<optgroup label="${v.name} Shinkansen ${v.jp}新幹線">${opts}</optgroup>`;
   }).join("");
-  $("stationSel").addEventListener("change", e=> selectStation(S.indexOfId(e.target.value)));
+  $("stationSel").addEventListener("change", e=>{ const [lk,id]=e.target.value.split(":"); selectStation(lk, S.line(lk).indexOfId(id)); });
   setInterval(render, 1000);
   setInterval(loadEvents, 300000);   // refresh timetable data every 5 minutes
   locate(true);                      // auto-detect location on load

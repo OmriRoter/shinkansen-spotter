@@ -1,146 +1,148 @@
 /* =========================================================================
-   engine.js — מנוע הלו"ז המשותף של "צייד שינקנסן".
-   עובד גם בדפדפן (window.Spotter) וגם ב-Node (module.exports).
+   engine.js — multi-line Shinkansen engine. Works in the browser
+   (window.Spotter) and in Node (module.exports).
 
-   זהו "מקור האמת" היחיד: נתוני התחנות, דפוסי העצירה, חישוב אירועי מעבר,
-   זיהוי כיוון/מצפן וזיהוי חסימה. גם הסימולציה וגם מסלול ה-Bright Data
-   החי מחזירים אירועים באותו פורמט: { type, dir, timeMin, stops }.
+   Station/stop data comes from lines-data.js (SpotterLines). This file holds
+   only the shared logic: geometry, nearest-station, deterministic simulation
+   fallback, distance interpolation for pass-through times, and blocking
+   detection. Every line is handled the same way via line "views".
+
+   Event format (sim + live): { type, dir, timeMin, stops, dest?, platform? }.
    ========================================================================= */
 (function (root, factory) {
-  const api = factory();
-  if (typeof module !== "undefined" && module.exports) module.exports = api; // Node
-  root.Spotter = api;                                                        // Browser
-})(typeof self !== "undefined" ? self : this, function () {
+  const api = factory(
+    (typeof self !== "undefined" && self.SpotterLines) ? self.SpotterLines :
+    (typeof require !== "undefined" ? require("./lines-data.js") : root.SpotterLines)
+  );
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  root.Spotter = api;
+})(typeof self !== "undefined" ? self : this, function (DATA) {
   "use strict";
 
-  /* Tokaido Shinkansen — index 0 = Tokyo (east) to Shin-Osaka (west). */
-  const STATIONS = [
-    { id:"tokyo",       name:"Tokyo",        jp:"東京",     lat:35.6812, lon:139.7671 },
-    { id:"shinagawa",   name:"Shinagawa",    jp:"品川",     lat:35.6285, lon:139.7387 },
-    { id:"shinyokohama",name:"Shin-Yokohama",jp:"新横浜",   lat:35.5079, lon:139.6173 },
-    { id:"odawara",     name:"Odawara",      jp:"小田原",   lat:35.2563, lon:139.1556 },
-    { id:"atami",       name:"Atami",        jp:"熱海",     lat:35.1031, lon:139.0781 },
-    { id:"mishima",     name:"Mishima",      jp:"三島",     lat:35.1267, lon:138.9111 },
-    { id:"shinfuji",    name:"Shin-Fuji",    jp:"新富士",   lat:35.1417, lon:138.6633 },
-    { id:"shizuoka",    name:"Shizuoka",     jp:"静岡",     lat:34.9719, lon:138.3886 },
-    { id:"kakegawa",    name:"Kakegawa",     jp:"掛川",     lat:34.7692, lon:137.9986 },
-    { id:"hamamatsu",   name:"Hamamatsu",    jp:"浜松",     lat:34.7036, lon:137.7347 },
-    { id:"toyohashi",   name:"Toyohashi",    jp:"豊橋",     lat:34.7628, lon:137.3819 },
-    { id:"mikawaanjo",  name:"Mikawa-Anjo",  jp:"三河安城", lat:34.9367, lon:137.0594 },
-    { id:"nagoya",      name:"Nagoya",       jp:"名古屋",   lat:35.1706, lon:136.8816 },
-    { id:"gifuhashima", name:"Gifu-Hashima", jp:"岐阜羽島", lat:35.3156, lon:136.6861 },
-    { id:"maibara",     name:"Maibara",      jp:"米原",     lat:35.3147, lon:136.2894 },
-    { id:"kyoto",       name:"Kyoto",        jp:"京都",     lat:34.9858, lon:135.7589 },
-    { id:"shinosaka",   name:"Shin-Osaka",   jp:"新大阪",   lat:34.7333, lon:135.5003 },
-  ];
-  const N = STATIONS.length;
+  const LINES = DATA.LINES, TYPE_META = DATA.TYPE_META;
+  const LINE_KEYS = Object.keys(LINES);
 
-  /* דפוסי עצירה אמיתיים (index בקו) לכל סוג רכבת */
-  const STOPS = {
-    nozomi: new Set([0,1,2,12,15,16]),
-    hikari: new Set([0,1,2,3,7,12,14,15,16]),
-    kodama: new Set(Array.from({length:N}, (_,i)=>i)),
-  };
-  const TRAIN_META = {
-    nozomi:{ label:"のぞみ Nozomi", cls:"nozomi", cruise:285, dwell:1.5 },
-    hikari:{ label:"ひかり Hikari", cls:"hikari", cruise:255, dwell:2.0 },
-    kodama:{ label:"こだま Kodama", cls:"kodama", cruise:220, dwell:1.0 },
-  };
-  const SCHEDULE = [
-    { type:"nozomi", headway:10, downOffset:0,  upOffset:5  },
-    { type:"hikari", headway:30, downOffset:8,  upOffset:23 },
-    { type:"kodama", headway:20, downOffset:3,  upOffset:13 },
-  ];
-  const SERVICE_START = 6*60, SERVICE_END = 23*60;
-
-  /* ---------- גאומטריה ---------- */
-  const R = 6371, toRad = d=>d*Math.PI/180, toDeg = r=>r*180/Math.PI;
-  function haversine(a,b){
-    const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
-    const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
-    return 2*R*Math.asin(Math.sqrt(s));
+  /* ---------- geometry ---------- */
+  const R = 6371, toRad = d => d * Math.PI / 180, toDeg = r => r * 180 / Math.PI;
+  function haversine(a, b) {
+    const dLat = toRad(b.lat - a.lat), dLon = toRad(b.lon - a.lon);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
   }
-  function bearing(a,b){
-    const y=Math.sin(toRad(b.lon-a.lon))*Math.cos(toRad(b.lat));
-    const x=Math.cos(toRad(a.lat))*Math.sin(toRad(b.lat))
-          - Math.sin(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.cos(toRad(b.lon-a.lon));
-    return (toDeg(Math.atan2(y,x))+360)%360;
+  function bearing(a, b) {
+    const y = Math.sin(toRad(b.lon - a.lon)) * Math.cos(toRad(b.lat));
+    const x = Math.cos(toRad(a.lat)) * Math.sin(toRad(b.lat))
+            - Math.sin(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.cos(toRad(b.lon - a.lon));
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
   }
-  const COMPASS_EN = ["N","NE","E","SE","S","SW","W","NW"];
-  const compass = deg => COMPASS_EN[Math.round(deg/45)%8];
+  const COMPASS_EN = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const compass = deg => COMPASS_EN[Math.round(deg / 45) % 8];
 
-  const CUM = (()=>{ const c=[0]; for(let i=1;i<N;i++) c[i]=c[i-1]+haversine(STATIONS[i-1],STATIONS[i]); return c; })();
-
-  /* ---------- סימולציה דטרמיניסטית (fallback / מצב offline) ---------- */
-  function eventTime(type, dir, baseMin, idx){
-    const m=TRAIN_META[type], stops=STOPS[type];
-    let distKm, lo, hi;
-    if(dir==="down"){ distKm=CUM[idx]-CUM[0]; lo=1; hi=idx; }
-    else            { distKm=CUM[N-1]-CUM[idx]; lo=idx+1; hi=N-2; }
-    let travel = distKm/m.cruise*60;
-    for(let i=lo;i<=hi;i++) if(stops.has(i)) travel += m.dwell;
-    return baseMin + travel;
+  function meta(type) {
+    return TYPE_META[type] || { en: type, jp: type, cls: "rapid", cruise: 270, dwell: 1.5 };
   }
-  function buildSimEvents(idx){
-    const out=[];
-    for(const s of SCHEDULE){
-      for(const dir of ["down","up"]){
-        const off = dir==="down" ? s.downOffset : s.upOffset;
-        for(let base=SERVICE_START+off; base<=SERVICE_END; base+=s.headway){
-          const t=eventTime(s.type,dir,base,idx);
-          if(t<SERVICE_START || t>SERVICE_END+30) continue;
-          out.push({ type:s.type, dir, timeMin:t, stops:STOPS[s.type].has(idx) });
+
+  /* cumulative along-line distance for a station list */
+  function cumOf(stations) {
+    const c = [0];
+    for (let i = 1; i < stations.length; i++) c[i] = c[i - 1] + haversine(stations[i - 1], stations[i]);
+    return c;
+  }
+
+  /* ---------- per-line "view": all the data + bound helpers for one line ---------- */
+  const viewCache = {};
+  function line(key) {
+    if (viewCache[key]) return viewCache[key];
+    const L = LINES[key];
+    if (!L) return null;
+    const stations = L.stations, N = stations.length, CUM = cumOf(stations);
+    const STOPS = {}; for (const t of L.types) STOPS[t] = new Set(L.stops[t]);
+    const express = L.express, HUBS = (L.hubs || []).slice().sort((a, b) => a - b);
+
+    function indexOfId(id) { return stations.findIndex(s => s.id === id); }
+
+    /* deterministic simulation (offline fallback) — one stream per train type */
+    function buildSimEvents(idx) {
+      const out = [], SERVICE_START = 360, SERVICE_END = 1380;
+      let off = 0;
+      for (const type of L.types) {
+        const m = meta(type), stopSet = STOPS[type];
+        const headway = m.cls === "ltd" ? 12 : m.cls === "rapid" ? 24 : 30;
+        for (const dir of ["down", "up"]) {
+          const o = off + (dir === "down" ? 0 : Math.round(headway / 2));
+          for (let base = SERVICE_START + o; base <= SERVICE_END; base += headway) {
+            // travel time from the relevant terminal to idx along the line
+            let distKm, lo, hi;
+            if (dir === "down") { distKm = CUM[idx] - CUM[0]; lo = 1; hi = idx; }
+            else { distKm = CUM[N - 1] - CUM[idx]; lo = idx + 1; hi = N - 2; }
+            let t = base + distKm / m.cruise * 60;
+            for (let i = lo; i <= hi; i++) if (stopSet.has(i)) t += m.dwell;
+            if (t < SERVICE_START || t > SERVICE_END + 30) continue;
+            out.push({ type, dir, timeMin: t, stops: stopSet.has(idx) });
+          }
+        }
+        off += 3;
+      }
+      out.sort((a, b) => a.timeMin - b.timeMin);
+      return out;
+    }
+
+    /* interpolate a pass-through time at idx from two bracketing stop times */
+    function interpolatePass(schedule, idx, dir) {
+      const pts = schedule.slice().sort((a, b) => dir === "down" ? a.idx - b.idx : b.idx - a.idx);
+      for (let k = 0; k < pts.length - 1; k++) {
+        const a = pts[k], b = pts[k + 1];
+        const lo = Math.min(a.idx, b.idx), hi = Math.max(a.idx, b.idx);
+        if (idx > lo && idx < hi) {
+          const frac = (CUM[idx] - CUM[lo]) / (CUM[hi] - CUM[lo]);
+          const tLo = a.idx === lo ? a.timeMin : b.timeMin;
+          const tHi = a.idx === hi ? a.timeMin : b.timeMin;
+          return tLo + frac * (tHi - tLo);
         }
       }
+      return null;
     }
-    out.sort((a,b)=>a.timeMin-b.timeMin);
-    return out;
+
+    function approachBearing(idx, dir) {
+      if (dir === "down") { const p = Math.max(0, idx - 1); return bearing(stations[idx], stations[p]); }
+      const p = Math.min(N - 1, idx + 1); return bearing(stations[idx], stations[p]);
+    }
+
+    return (viewCache[key] = {
+      key, name: L.name, jp: L.jp, lineId: L.lineId,
+      STATIONS: stations, N, CUM, STOPS, types: L.types, express, HUBS,
+      hubs: () => HUBS,
+      isHub: idx => HUBS.indexOf(idx) >= 0,
+      indexOfId, buildSimEvents, interpolatePass, approachBearing,
+    });
   }
 
-  /* ---------- אינטרפולציית זמן-מעבר מנתוני scraping אמיתיים ----------
-     בהינתן לו"ז אמיתי של רכבת אחת (זמנים בתחנות שבהן היא כן עוצרת),
-     מחשבים מתי היא חולפת בתחנה idx (שבה היא לא עוצרת) לפי מרחק יחסי
-     בין שתי תחנות העצירה שעוטפות אותה.
-     schedule = [{ idx, timeMin }] ממויין; dir = "down" | "up".          */
-  function interpolatePass(schedule, idx, dir){
-    const pts = schedule.slice().sort((a,b)=> dir==="down" ? a.idx-b.idx : b.idx-a.idx);
-    for(let k=0;k<pts.length-1;k++){
-      const a=pts[k], b=pts[k+1];
-      const lo=Math.min(a.idx,b.idx), hi=Math.max(a.idx,b.idx);
-      if(idx>lo && idx<hi){
-        const frac=(CUM[idx]-CUM[lo])/(CUM[hi]-CUM[lo]);
-        const tLo = a.idx===lo ? a.timeMin : b.timeMin;
-        const tHi = a.idx===hi ? a.timeMin : b.timeMin;
-        return tLo + frac*(tHi-tLo);
+  /* nearest station across every line */
+  function nearestStation(lat, lon) {
+    let best = { lineKey: LINE_KEYS[0], idx: 0, dist: Infinity };
+    for (const key of LINE_KEYS) {
+      const sts = LINES[key].stations;
+      for (let i = 0; i < sts.length; i++) {
+        const d = haversine({ lat, lon }, sts[i]);
+        if (d < best.dist) best = { lineKey: key, idx: i, dist: d };
       }
     }
-    return null; // התחנה מחוץ לטווח הלו"ז שנסרק
+    return best;
   }
 
-  /* ---------- כיוון/מצפן + זיהוי חסימה (משותף לכל המקורות) ---------- */
-  function approachBearing(idx, dir){
-    if(dir==="down"){ const p=Math.max(0,idx-1); return bearing(STATIONS[idx],STATIONS[p]); }
-    const p=Math.min(N-1,idx+1); return bearing(STATIONS[idx],STATIONS[p]);
-  }
-  function blockingTrain(events, t, dir){
-    for(const e of events){
-      if(!e.stops || e.dir!==dir) continue;
-      const dwell = e.type==="kodama" ? 6 : (TRAIN_META[e.type]?.dwell ?? 1.5);
-      if(t>=e.timeMin-0.3 && t<=e.timeMin+dwell+0.3) return { type:e.type, until:e.timeMin+dwell, platform:e.platform };
+  /* a stopping train (same direction) that may block the shot while it dwells */
+  function blockingTrain(events, t, dir) {
+    for (const e of events) {
+      if (!e.stops || e.dir !== dir) continue;
+      const dwell = (meta(e.type).dwell || 1.5) + (meta(e.type).cls === "local" ? 4 : 0);
+      if (t >= e.timeMin - 0.3 && t <= e.timeMin + dwell + 0.3) return { type: e.type, until: e.timeMin + dwell, platform: e.platform };
     }
     return null;
   }
-  function nearestStation(lat,lon){
-    let best=0,bd=Infinity;
-    for(let i=0;i<N;i++){ const d=haversine({lat,lon},STATIONS[i]); if(d<bd){bd=d;best=i;} }
-    return { idx:best, dist:bd };
-  }
 
   return {
-    STATIONS, STOPS, TRAIN_META, SCHEDULE, N, CUM,
-    SERVICE_START, SERVICE_END,
-    haversine, bearing, compass, approachBearing,
-    buildSimEvents, interpolatePass, blockingTrain, nearestStation,
-    indexOfId: id => STATIONS.findIndex(s=>s.id===id),
+    LINES, TYPE_META, LINE_KEYS,
+    line, nearestStation, blockingTrain,
+    haversine, bearing, compass, meta,
   };
 });
