@@ -152,9 +152,13 @@ async function buildLiveEvents(idx) {
 }
 
 module.exports = async (req, res) => {
-  const id = (req.query.station || "odawara").toString();
+  const q = req.query.station;
+  const id = (Array.isArray(q) ? q[0] : q || "odawara").toString().toLowerCase();
   const idx = idOf(id);
   if (idx < 0) { res.status(400).json({ error: "unknown station id" }); return; }
+  // Timetables only change daily; let Vercel's CDN absorb repeat hits so most
+  // visitors get a cached response instead of waiting on a fresh scrape.
+  res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=3600");
   if (process.env.BRIGHTDATA_API_TOKEN) {
     try {
       const events = await buildLiveEvents(idx);

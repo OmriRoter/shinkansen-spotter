@@ -126,7 +126,7 @@
     for(const e of events){
       if(!e.stops || e.dir!==dir) continue;
       const dwell = e.type==="kodama" ? 6 : (TRAIN_META[e.type]?.dwell ?? 1.5);
-      if(t>=e.timeMin-0.3 && t<=e.timeMin+dwell+0.3) return { type:e.type, until:e.timeMin+dwell };
+      if(t>=e.timeMin-0.3 && t<=e.timeMin+dwell+0.3) return { type:e.type, until:e.timeMin+dwell, platform:e.platform };
     }
     return null;
   }
