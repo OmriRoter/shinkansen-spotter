@@ -162,7 +162,7 @@
   .li-left .small{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .li-time{font-family:"DotGothic16",monospace; font-size:15px; color:var(--led); min-width:52px; font-variant-numeric:tabular-nums;}
   .li-right{display:flex; gap:8px; align-items:baseline; flex:0 0 auto;}
-  .li-mins{font-family:"DotGothic16",monospace; font-size:14px; color:var(--board-txt); min-width:38px; text-align:right;}
+  .li-mins{font-family:"DotGothic16",monospace; font-size:13px; color:var(--board-txt); min-width:56px; text-align:right; white-space:nowrap;}
   .li-plat{font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--board-dim);}
   .st-ok{color:var(--led); font-weight:900;}
   .st-no{color:var(--red-board); font-weight:900;}
@@ -626,17 +626,18 @@ function setBanner(blk){
 function renderList(items, mode){
   const t=nowMinutes(), ul=$("upList"), rows=items.slice(0,7);
   if(!rows.length){ ul.innerHTML='<li class="muted small">Nothing upcoming right now</li>'; return; }
+  const mins = v => { const x=Math.round(v); return x<=0 ? "now" : x+" min"; };
   ul.innerHTML = rows.map(e=>{
     const m=S.meta(e.type), dest=e.dest||terminalName(e.dir);
     let right;
     if(mode==="dep"){
       right = (e.platform!=null ? '<span class="li-plat">Plat. '+e.platform+'</span>' : "")+
-        `<span class="li-mins">${Math.round(e.timeMin-t)}m</span>`;
+        `<span class="li-mins">${mins(e.timeMin-t)}</span>`;
     } else {
       const blk=S.blockingTrain(events, e.timeMin, e.dir);
       right = (blk?'<span class="st-no" title="View may be blocked by a stopping train">×</span>'
                   :'<span class="st-ok" title="Clear view">○</span>')+
-        `<span class="li-mins">${Math.round(e.timeMin-t)}m</span>`;
+        `<span class="li-mins">${mins(e.timeMin-t)}</span>`;
     }
     return `<li><span class="li-left"><span class="li-time">${fmtClock(e.timeMin)}</span>`+
       `<span class="badge ${m.cls}">${m.en}</span>`+
