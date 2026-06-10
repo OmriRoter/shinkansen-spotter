@@ -104,8 +104,11 @@ function parseBoard(html, dir) {
     const ddir = (seg.match(/data-direction="([^"]*)"/) || [])[1] || dir;
     const tm = seg.match(/<dt class="time">\s*(\d{1,2})\s*<\/dt>/);
     const ty = seg.match(/<dd class="type"[^>]*>\s*([^<]+?)\s*<\/dd>/);
+    const dest = (seg.match(/data-destination="([^"]*)"/) || [])[1] || "";
+    const plat = seg.match(/Platform:\s*(\d+)/i);
     const type = classify(name) || (ty ? classify(ty[1]) : null);
-    if (name && hour != null && tm && type) out.push({ name, type, dir: ddir, depMin: +hour * 60 + +tm[1] });
+    if (name && hour != null && tm && type)
+      out.push({ name, type, dir: ddir, depMin: +hour * 60 + +tm[1], dest, platform: plat ? +plat[1] : null });
   }
   return out;
 }
@@ -127,14 +130,16 @@ async function buildLiveEvents(idx) {
       wrap ? fetchBoard(before, dir) : Promise.resolve([]),
       wrap ? fetchBoard(after, dir) : Promise.resolve([]),
     ]);
-    for (const r of own) events.push({ type: r.type, dir, timeMin: r.depMin, stops: true });
+    for (const r of own) events.push({ type: r.type, dir, timeMin: r.depMin, stops: true, dest: r.dest, platform: r.platform });
     if (wrap) {
       const ownNames = new Set(own.map((r) => r.name)), map = new Map();
-      for (const r of b1) map.set(r.name, { before: r.depMin, type: r.type });
+      for (const r of b1) map.set(r.name, { before: r.depMin, type: r.type, dest: r.dest });
       for (const r of b2) { const e = map.get(r.name); if (e) e.after = r.depMin; }
       for (const [name, e] of map) {
         if (e.before == null || e.after == null || ownNames.has(name)) continue;
-        events.push({ type: e.type, dir, timeMin: interpolate(before, e.before, after, e.after, idx), stops: false });
+        // subtract the next-stop dwell from its departure to recover true arrival time
+        const dwell = (META[e.type] || {}).dwell || 0;
+        events.push({ type: e.type, dir, timeMin: interpolate(before, e.before, after, e.after - dwell, idx), stops: false, dest: e.dest });
       }
     }
   }

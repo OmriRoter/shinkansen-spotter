@@ -64,9 +64,13 @@ function parseStationTimetable(html, dir) {
     const dest = (seg.match(/data-destination="([^"]*)"/) || [])[1] || "";
     const tm = seg.match(/<dt class="time">\s*(\d{1,2})\s*<\/dt>/);
     const ty = seg.match(/<dd class="type"[^>]*>\s*([^<]+?)\s*<\/dd>/);
+    const plat = seg.match(/Platform:\s*(\d+)/i);
     const type = classify(name) || (ty ? classify(ty[1]) : null);
     if (name && hour != null && tm && type) {
-      out.push({ trainName: name, type, dir: ddir, depMin: (+hour) * 60 + (+tm[1]), destination: dest });
+      out.push({
+        trainName: name, type, dir: ddir, depMin: (+hour) * 60 + (+tm[1]),
+        destination: dest, platform: plat ? +plat[1] : null,
+      });
     }
   }
   return out;
@@ -107,20 +111,25 @@ async function buildLiveEvents(idx) {
     const afterP = wrap ? fetchStationBoard(after, dir) : Promise.resolve([]);
     const [own, boardBefore, boardAfter] = await Promise.all([ownP, beforeP, afterP]);
 
-    for (const r of own) events.push({ type: r.type, dir, timeMin: r.depMin, stops: true });
+    for (const r of own) events.push({
+      type: r.type, dir, timeMin: r.depMin, stops: true, dest: r.destination, platform: r.platform,
+    });
 
     if (wrap) {
       const ownNames = new Set(own.map((r) => r.trainName));
       const byName = new Map();
-      for (const r of boardBefore) byName.set(r.trainName, { before: r.depMin, type: r.type });
+      for (const r of boardBefore) byName.set(r.trainName, { before: r.depMin, type: r.type, dest: r.destination });
       for (const r of boardAfter) { const e = byName.get(r.trainName); if (e) e.after = r.depMin; }
       for (const [name, e] of byName) {
         if (e.before == null || e.after == null) continue;
         if (ownNames.has(name)) continue; // למעשה עוצרת ב-idx — לא מעבר
+        // זמן ה"after" הוא יציאה מהתחנה הבאה וכולל את זמן-העצירה (dwell) שלה;
+        // מחסירים אותו כדי לקבל את זמן-ההגעה האמיתי ולדייק את האינטרפולציה.
+        const dwell = (Spotter.TRAIN_META[e.type] || {}).dwell || 0;
         const t = Spotter.interpolatePass(
-          [{ idx: before, timeMin: e.before }, { idx: after, timeMin: e.after }], idx, dir);
+          [{ idx: before, timeMin: e.before }, { idx: after, timeMin: e.after - dwell }], idx, dir);
         if (t == null) continue;
-        events.push({ type: e.type, dir, timeMin: t, stops: false });
+        events.push({ type: e.type, dir, timeMin: t, stops: false, dest: e.dest });
       }
     }
   }

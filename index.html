@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#0b1020" />
-<title>צייד שינקנסן 🚄 — Bullet Train Spotter</title>
+<title>Shinkansen Spotter 🚄 — Bullet Train Pass-Through Tracker</title>
 <style>
   :root{
     --bg:#0b1020; --bg2:#121a33; --card:#17203f; --card2:#1d2950;
@@ -15,7 +15,7 @@
   html,body{margin:0; padding:0;}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,
-      "Noto Sans Hebrew","Apple Color Emoji",sans-serif;
+      "Apple Color Emoji",sans-serif;
     background:radial-gradient(1200px 800px at 80% -10%,#1b2a55 0,transparent 60%),
       linear-gradient(160deg,var(--bg),#070a16 70%);
     background-color:var(--bg);
@@ -45,6 +45,7 @@
   button{background:linear-gradient(180deg,var(--accent),#1aa9e0); color:#04121c; border:none;
     border-radius:12px; padding:11px 14px; font-weight:700; cursor:pointer; width:100%;}
   button.ghost{background:#0e1530; color:var(--txt); border:1px solid var(--line); font-weight:600;}
+  button.ghost.on{background:var(--accent2); color:#fff; border-color:var(--accent2);}
   label.fld{display:block; font-size:12px; color:var(--muted); margin:0 0 6px;}
   .seg{display:flex; gap:6px; background:#0e1530; border:1px solid var(--line); border-radius:12px; padding:4px;}
   .seg button{background:transparent; color:var(--muted); padding:7px 10px; font-weight:600; border-radius:9px;}
@@ -57,13 +58,15 @@
   .badge.hikari{background:#143a52; color:#9fe3ff;}
   .badge.down{background:#13324a; color:#9ad7ff;}
   .badge.up{background:#0f3a2e; color:#9af0cf;}
-  .compass{width:120px; height:120px; border-radius:50%; flex:0 0 auto;
-    background:radial-gradient(circle at 50% 50%,#0e1530,#0a1126); border:2px solid var(--line); position:relative;}
+  .compass-box{width:120px; height:120px; flex:0 0 auto; position:relative;}
+  .compass{width:120px; height:120px; border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,#0e1530,#0a1126); border:2px solid var(--line);
+    position:relative; transition:transform .25s linear;}
   .compass .tick{position:absolute; color:var(--muted); font-size:10px; font-weight:700;}
   .compass .n{top:4px; left:50%; transform:translateX(-50%); color:var(--bad);}
   .compass .s{bottom:4px; left:50%; transform:translateX(-50%);}
-  .compass .e{left:6px; top:50%; transform:translateY(-50%);}
-  .compass .w{right:6px; top:50%; transform:translateY(-50%);}
+  .compass .e{right:6px; top:50%; transform:translateY(-50%);}
+  .compass .w{left:6px; top:50%; transform:translateY(-50%);}
   .arrow{position:absolute; left:50%; top:50%; width:0; height:0; transform-origin:center;
     transition:transform .6s cubic-bezier(.2,.8,.2,1);}
   .arrow::before{content:""; position:absolute; left:-7px; top:-46px;
@@ -87,30 +90,32 @@
   a{color:var(--accent);}
   .spin{display:inline-block; animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .passline{margin-top:10px; font-size:13px; font-weight:600;}
+  .passline .seg-from{color:#9ad7ff;} .passline .seg-to{color:#9af0cf;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>🚄 צייד שינקנסן</h1>
-    <p class="sub">מזהה את התחנה הקרובה אליך ביפן ואומר מתי הרכבת המהירה הבאה <b>חולפת בלי לעצור</b> — ומאיזה כיוון לכוון את המצלמה.</p>
+    <h1>🚄 Shinkansen Spotter</h1>
+    <p class="sub">Finds your nearest Japanese Shinkansen station and tells you when the next bullet train <b>passes through without stopping</b> — which side it enters from, which way it exits, and which platform to aim your camera at.</p>
   </header>
 
   <div class="card">
     <div class="row between" style="margin-bottom:12px;">
-      <span class="pill"><span id="liveDot" class="dot"></span><span id="liveLbl">לא מחובר</span></span>
+      <span class="pill"><span id="liveDot" class="dot"></span><span id="liveLbl">Not connected</span></span>
       <span class="small muted" id="clock">--:--:--</span>
     </div>
-    <button id="btnLocate">📍 אתר אותי לפי GPS</button>
+    <button id="btnLocate">📍 Locate me by GPS</button>
     <div style="height:10px"></div>
-    <label class="fld" for="stationSel">או בחר תחנה ידנית (קו טוקאידו שינקנסן):</label>
+    <label class="fld" for="stationSel">Or pick a station manually (Tokaido Shinkansen):</label>
     <select id="stationSel"></select>
 
     <div class="row between" style="margin-top:12px;">
-      <label class="fld" style="margin:0;">מקור נתונים</label>
+      <label class="fld" style="margin:0;">Data source</label>
       <div class="seg" id="srcSeg">
-        <button data-src="sim" class="on">סימולציה</button>
-        <button data-src="live">חי · Bright Data</button>
+        <button data-src="sim" class="on">Simulation</button>
+        <button data-src="live">Live · Bright Data</button>
       </div>
     </div>
     <div id="locInfo" class="small muted" style="margin-top:8px;"></div>
@@ -121,43 +126,47 @@
       <div>
         <div class="train-type" id="heroType">—</div>
         <div class="countdown" id="heroCountdown">--:--</div>
-        <div class="eta" id="heroEta">בחר תחנה כדי להתחיל</div>
+        <div class="eta" id="heroEta">Pick a station to begin</div>
         <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;" id="heroBadges"></div>
+        <div class="passline" id="heroPass"></div>
       </div>
-      <div class="compass" id="compass">
-        <span class="tick n">צ</span><span class="tick s">ד</span>
-        <span class="tick e">מז</span><span class="tick w">מע</span>
-        <div class="arrow" id="arrow"></div>
+      <div class="compass-box">
+        <div class="compass" id="compass">
+          <span class="tick n">N</span><span class="tick s">S</span>
+          <span class="tick e">E</span><span class="tick w">W</span>
+          <div class="arrow" id="arrow"></div>
+        </div>
       </div>
     </div>
     <div class="grid2" style="margin-top:16px;">
-      <div class="kv"><span class="k">מגיעה מכיוון</span><span class="v" id="kvFrom">—</span></div>
-      <div class="kv"><span class="k">כיוון נסיעה</span><span class="v" id="kvDir">—</span></div>
-      <div class="kv"><span class="k">מסלול / רציף</span><span class="v" id="kvTrack">—</span></div>
-      <div class="kv"><span class="k">מהירות משוערת</span><span class="v" id="kvSpeed">—</span></div>
+      <div class="kv"><span class="k">Enters from</span><span class="v" id="kvFrom">—</span></div>
+      <div class="kv"><span class="k">Exits toward</span><span class="v" id="kvDir">—</span></div>
+      <div class="kv"><span class="k">Camera side / platform</span><span class="v" id="kvTrack">—</span></div>
+      <div class="kv"><span class="k">Est. speed</span><span class="v" id="kvSpeed">—</span></div>
     </div>
+    <button class="ghost" id="btnCompass" style="margin-top:14px;">🧭 Calibrate to live device compass</button>
   </div>
 
   <div class="card">
     <div class="banner clear" id="blockBanner">
       <span class="ico">✅</span>
-      <div><div id="blockTitle">המסלול פנוי</div><div class="small" id="blockDesc" style="font-weight:400; opacity:.9;"></div></div>
+      <div><div id="blockTitle">Track is clear</div><div class="small" id="blockDesc" style="font-weight:400; opacity:.9;"></div></div>
     </div>
   </div>
 
   <div class="card">
     <div class="row between" style="margin-bottom:8px;">
-      <b>חלופות קרובות (לא עוצרות)</b>
+      <b>Upcoming pass-throughs (non-stop)</b>
       <span class="small muted" id="upTitleStation"></span>
     </div>
     <ul class="list" id="upList"><li class="muted small">—</li></ul>
   </div>
 
   <div class="disclaimer" id="disclaimer">
-    ℹ️ <b>מקור נתונים:</b> במצב <b>חי · Bright Data</b> השרת מושך לוחות-זמנים אמיתיים דרך Bright Data Web Unlocker
-    (עוקף את חסימת ה-403/anti-bot של אתרי JR) ומחשב זמן-מעבר באינטרפולציה. ללא טוקן Bright Data,
-    או בכשל גרידה, האפליקציה נופלת אוטומטית ל<b>מנוע סימולציה</b> המבוסס על דפוסי קו טוקאידו האמיתיים.
-    <b>לבטיחות — לעולם אל תתקרב מעבר לקו הצהוב.</b>
+    ℹ️ <b>Data source:</b> in <b>Live · Bright Data</b> mode the server pulls real timetables through the Bright Data Web Unlocker
+    (bypassing the 403/anti-bot blocks on JR/NAVITIME sites) and computes pass-through times by distance interpolation. Without a
+    Bright Data token, or on a scrape failure, the app automatically falls back to a <b>simulation engine</b> based on real Tokaido-line
+    patterns. <b>For your safety — never cross beyond the yellow line.</b> Bullet trains pass at very high speed.
   </div>
 </div>
 
@@ -170,12 +179,16 @@ const $ = id => document.getElementById(id);
 let stationIdx = S.indexOfId("odawara");
 let events = [];
 let dataSource = "sim";        // "sim" | "live"
-let lastSourceLabel = "סימולציה";
+let lastSourceLabel = "Simulation";
+let deviceHeading = null;      // live compass heading (deg from north), null = not calibrated
 
 function nowMinutes(){ const d=new Date(); return d.getHours()*60 + d.getMinutes() + d.getSeconds()/60; }
 function fmtClock(min){ const h=Math.floor(min/60)%24, m=Math.floor(min%60); return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
 function fmtCountdown(mins){ if(mins<0)mins=0; const t=Math.round(mins*60); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
-function destName(dir){ return dir==="down" ? S.STATIONS[S.N-1].name : S.STATIONS[0].name; }
+function terminalName(dir){ return dir==="down" ? S.STATIONS[S.N-1].name : S.STATIONS[0].name; }
+// station the train comes from / heads to (by line neighbours along travel direction)
+function fromIdxOf(idx, dir){ return dir==="down" ? Math.max(0, idx-1) : Math.min(S.N-1, idx+1); }
+function toIdxOf(idx, dir){ return dir==="down" ? Math.min(S.N-1, idx+1) : Math.max(0, idx-1); }
 
 async function loadEvents(){
   if(dataSource==="live"){
@@ -183,23 +196,23 @@ async function loadEvents(){
       const r = await fetch("/api/next-trains?station="+S.STATIONS[stationIdx].id);
       const j = await r.json();
       events = j.events || [];
-      lastSourceLabel = j.source==="brightdata" ? "חי · Bright Data" : "סימולציה (fallback)";
+      lastSourceLabel = j.source==="brightdata" ? "Live · Bright Data" : "Simulation (fallback)";
       setSrcDot(j.source);
       if(j.source!=="brightdata") $("locInfo").innerHTML =
-        "ℹ️ אין טוקן Bright Data בשרת — מוצגת סימולציה. ראה <code>.env.example</code>.";
+        "ℹ️ No Bright Data token on the server — showing simulation. See <code>.env.example</code>.";
     }catch(e){
-      events = S.buildSimEvents(stationIdx); lastSourceLabel="סימולציה (אין שרת)"; setSrcDot(null);
-      $("locInfo").innerHTML = "⚠️ אין שרת פעיל (פתח דרך <code>npm start</code> כדי להפעיל מצב חי). מוצגת סימולציה.";
+      events = S.buildSimEvents(stationIdx); lastSourceLabel="Simulation (no server)"; setSrcDot(null);
+      $("locInfo").innerHTML = "⚠️ No live server reachable — showing simulation.";
     }
   } else {
-    events = S.buildSimEvents(stationIdx); lastSourceLabel="סימולציה"; setSrcDot("sim");
+    events = S.buildSimEvents(stationIdx); lastSourceLabel="Simulation"; setSrcDot("sim");
   }
   render();
 }
 function setSrcDot(source){
   const dot=$("liveDot"), lbl=$("liveLbl");
-  if(source==="brightdata"){ dot.className="dot bright"; lbl.textContent="חי · Bright Data"; }
-  else if(source==="sim"){ dot.className="dot"; lbl.textContent="סימולציה"; }
+  if(source==="brightdata"){ dot.className="dot bright"; lbl.textContent="Live · Bright Data"; }
+  else if(source==="sim"){ dot.className="dot"; lbl.textContent="Simulation"; }
   else { dot.className="dot live"; lbl.textContent=lastSourceLabel; }
 }
 
@@ -210,7 +223,7 @@ function selectStation(idx){
 }
 
 function render(){
-  $("clock").textContent = new Date().toLocaleTimeString("he-IL");
+  $("clock").textContent = new Date().toLocaleTimeString("en-GB");
   const t = nowMinutes();
   const passes = events.filter(e => !e.stops && e.timeMin>t && (e.type==="nozomi"||e.type==="hikari"));
   const next = passes[0];
@@ -218,85 +231,134 @@ function render(){
   const isMajorStop = S.STOPS.nozomi.has(stationIdx);
 
   if(!next){
-    $("heroType").textContent = isMajorStop ? "תחנה ראשית — הרכבות המהירות עוצרות כאן" : "אין עוד חלופות כרגע";
+    $("heroType").textContent = isMajorStop ? "Major stop — fast trains stop here" : "No pass-throughs right now";
     $("heroCountdown").textContent="--:--";
     $("heroEta").textContent = isMajorStop
-      ? "ב-"+s.name+" כל ה-Nozomi עוצרות; כמעט אין רכבות חולפות. נסה תחנת-ביניים (אודוארה / מישימה / מאיבארה)."
-      : "אין נתוני מעבר עתידיים. נסה לרענן או החלף מקור נתונים.";
-    $("heroBadges").innerHTML=""; $("arrow").style.transform="translate(-50%,-50%) rotate(0deg)";
+      ? "At "+s.name+" every Nozomi stops, so almost nothing passes through. Try an intermediate station (Odawara / Mishima / Maibara)."
+      : "No upcoming pass-through data. Try refreshing or switching the data source.";
+    $("heroBadges").innerHTML=""; $("heroPass").textContent=""; setArrow(0);
     ["kvFrom","kvDir","kvTrack","kvSpeed"].forEach(k=>$(k).textContent="—");
     setBanner(null); renderList(passes); return;
   }
 
   const m=S.TRAIN_META[next.type], dt=next.timeMin-t;
-  $("heroType").textContent = next.type==="nozomi" ? "הרכבת המהירה הבאה חולפת בעוד" : "רכבת חולפת בעוד";
+  const dest = next.dest || terminalName(next.dir);
+  $("heroType").textContent = next.type==="nozomi" ? "Next fast train passes in" : "Train passes in";
   $("heroCountdown").textContent = fmtCountdown(dt);
-  $("heroEta").textContent = "חולפת בשעה "+fmtClock(next.timeMin)+" · "+m.label+" · מקור: "+lastSourceLabel;
+  $("heroEta").textContent = "Passes at "+fmtClock(next.timeMin)+" · "+m.label+" · source: "+lastSourceLabel;
   $("heroBadges").innerHTML =
     `<span class="badge ${m.cls}">${m.label}</span>`+
-    `<span class="badge ${next.dir}">${next.dir==="down"?"יורדת ▶ "+destName("down"):"עולה ▶ "+destName("up")}</span>`;
+    `<span class="badge ${next.dir}">${next.dir==="down"?"Down ▶":"Up ◀"} to ${dest}</span>`;
 
-  const appr = S.approachBearing(stationIdx, next.dir);
-  $("kvFrom").textContent = S.compass(appr)+" ("+Math.round(appr)+"°)";
-  $("kvDir").textContent = next.dir==="down" ? "מערבה (יורדת) → "+destName("down") : "מזרחה (עולה) → "+destName("up");
-  $("kvTrack").textContent = next.dir==="down" ? "מסלול יורד · עמוד בצד הדרומי" : "מסלול עולה · עמוד בצד הצפוני";
-  $("kvSpeed").textContent = "~"+m.cruise+" קמ\"ש";
-  $("arrow").style.transform = "translate(-50%,-50%) rotate("+appr+"deg)";
+  // direction geometry
+  const approach = S.approachBearing(stationIdx, next.dir);              // where it enters FROM
+  const toIdx = toIdxOf(stationIdx, next.dir), fromIdx = fromIdxOf(stationIdx, next.dir);
+  const exit = S.bearing(S.STATIONS[stationIdx], S.STATIONS[toIdx]);     // where it exits TOWARD
+  const fromName = S.STATIONS[fromIdx].name, toName = S.STATIONS[toIdx].name;
+
+  $("heroPass").innerHTML =
+    `Passes <span class="seg-from">${fromName} side (${S.compass(approach)})</span> ▶ `+
+    `<span class="seg-to">${toName} side (${S.compass(exit)})</span>`;
+
+  $("kvFrom").textContent = fromName+" — "+S.compass(approach)+" ("+Math.round(approach)+"°)";
+  $("kvDir").textContent  = toName+" — "+S.compass(exit)+" ("+Math.round(exit)+"°)";
+  $("kvTrack").textContent = next.dir==="down"
+    ? "Down track · stand on the south side"
+    : "Up track · stand on the north side";
+  $("kvSpeed").textContent = "~"+m.cruise+" km/h";
+  setArrow(approach);
 
   setBanner(S.blockingTrain(events, next.timeMin, next.dir));
   renderList(passes);
+}
+
+// arrow points to the absolute bearing the train comes from; if the live device
+// compass is on, the whole dial is rotated so the arrow points the real-world way.
+function setArrow(bearingDeg){
+  $("arrow").dataset.bearing = bearingDeg;
+  $("arrow").style.transform = "translate(-50%,-50%) rotate("+bearingDeg+"deg)";
+  applyDial();
+}
+function applyDial(){
+  $("compass").style.transform = deviceHeading==null ? "rotate(0deg)" : "rotate("+(-deviceHeading)+"deg)";
 }
 
 function setBanner(blk){
   const b=$("blockBanner");
   if(!blk){
     b.className="banner clear"; b.querySelector(".ico").textContent="✅";
-    $("blockTitle").textContent="המסלול פנוי — אין רכבת עומדת שתסתיר";
-    $("blockDesc").textContent="לא צפויה רכבת עוצרת באותו צד רציף בזמן החליפה.";
+    $("blockTitle").textContent="Track clear — no standing train will block the shot";
+    $("blockDesc").textContent="No stopping train is expected on the same platform side during the pass.";
   } else {
     const m=S.TRAIN_META[blk.type];
+    const plat = (blk.platform!=null) ? " at Platform "+blk.platform : "";
     b.className="banner blocked"; b.querySelector(".ico").textContent="⛔";
-    $("blockTitle").textContent="שים לב: רכבת "+m.label.split(" ")[1]+" עומדת ברציף ועלולה להסתיר!";
-    $("blockDesc").textContent="רכבת "+m.label+" עוצרת באותו צד עד ~"+fmtClock(blk.until)+". עבור לצד השני של הרציף או לתחנת-ביניים פתוחה.";
+    $("blockTitle").textContent="Heads up: a "+m.label.split(" ").pop()+" is stopping"+plat+" and may block you!";
+    $("blockDesc").textContent="A "+m.label+" stops on the same side until ~"+fmtClock(blk.until)+
+      ". Move to the other side of the platform, or to an open intermediate station.";
   }
 }
 
 function renderList(passes){
   const t=nowMinutes(), ul=$("upList"), items=passes.slice(0,7);
-  if(!items.length){ ul.innerHTML='<li class="muted small">אין חלופות נוספות כרגע</li>'; return; }
+  if(!items.length){ ul.innerHTML='<li class="muted small">No further pass-throughs right now</li>'; return; }
   ul.innerHTML = items.map(e=>{
     const m=S.TRAIN_META[e.type], blk=S.blockingTrain(events, e.timeMin, e.dir);
-    const dirLbl = e.dir==="down" ? "▶ "+destName("down") : "◀ "+destName("up");
+    const dest=e.dest || terminalName(e.dir);
+    const dirLbl = (e.dir==="down" ? "▶ " : "◀ ")+dest;
     return `<li><span class="li-left"><span class="li-time">${fmtClock(e.timeMin)}</span>`+
-      `<span class="badge ${m.cls}">${m.label.split(" ")[1]}</span>`+
+      `<span class="badge ${m.cls}">${m.label.split(" ").pop()}</span>`+
       `<span class="small muted">${dirLbl}</span></span>`+
-      `<span class="small">${blk?'⛔ <span style="color:var(--bad)">חסום</span>':'✅ <span style="color:var(--ok)">פנוי</span>'} · בעוד ${Math.round(e.timeMin-t)} ד'</span></li>`;
+      `<span class="small">${blk?'⛔ <span style="color:var(--bad)">blocked</span>':'✅ <span style="color:var(--ok)">clear</span>'} · in ${Math.round(e.timeMin-t)} min</span></li>`;
   }).join("");
 }
 
+/* ---------- Live device compass ---------- */
+function onOrient(e){
+  let h=null;
+  if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading;      // iOS: degrees from north, CW
+  else if(e.absolute && typeof e.alpha==="number") h=(360-e.alpha)%360;        // standard absolute
+  if(h!=null && isFinite(h)){ deviceHeading=h; applyDial(); }
+}
+async function enableCompass(){
+  try{
+    if(typeof DeviceOrientationEvent!=="undefined" && typeof DeviceOrientationEvent.requestPermission==="function"){
+      const p = await DeviceOrientationEvent.requestPermission();
+      if(p!=="granted"){ $("locInfo").textContent="Compass permission denied."; return; }
+    }
+    window.addEventListener("deviceorientationabsolute", onOrient, true);
+    window.addEventListener("deviceorientation", onOrient, true);
+    $("btnCompass").textContent="🧭 Live compass on — turn to face the arrow";
+    $("btnCompass").classList.add("on");
+  }catch(err){
+    $("locInfo").textContent="Live compass not available on this device.";
+  }
+}
+$("btnCompass").addEventListener("click", enableCompass);
+
 /* ---------- GPS ---------- */
 $("btnLocate").addEventListener("click", ()=>{
-  if(!navigator.geolocation){ $("locInfo").textContent="הדפדפן לא תומך באיתור מיקום."; return; }
-  $("btnLocate").innerHTML='<span class="spin">◌</span> מאתר מיקום…';
+  if(!navigator.geolocation){ $("locInfo").textContent="This browser does not support geolocation."; return; }
+  $("btnLocate").innerHTML='<span class="spin">◌</span> Locating…';
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:lat, longitude:lon}=pos.coords;
     const {idx,dist}=S.nearestStation(lat,lon);
     selectStation(idx);
     const inJapan = lat>24 && lat<46 && lon>122 && lon<154;
-    $("btnLocate").textContent="📍 אתר אותי לפי GPS";
-    $("locInfo").innerHTML = (inJapan?"":"⚠️ נראה שאתה לא ביפן — מציג הדגמה. ")+
-      "התחנה הקרובה: <b>"+S.STATIONS[idx].name+"</b> ("+S.STATIONS[idx].jp+") · "+dist.toFixed(1)+" ק\"מ ממך.";
+    $("btnLocate").textContent="📍 Locate me by GPS";
+    $("locInfo").innerHTML = (inJapan?"":"⚠️ You don't appear to be in Japan — showing a demo. ")+
+      "Nearest station: <b>"+S.STATIONS[idx].name+"</b> ("+S.STATIONS[idx].jp+") · "+dist.toFixed(1)+" km away.";
   }, err=>{
-    $("btnLocate").textContent="📍 אתר אותי לפי GPS";
-    $("locInfo").textContent="לא ניתן לאתר ("+err.message+"). בחר תחנה ידנית.";
+    $("btnLocate").textContent="📍 Locate me by GPS";
+    $("locInfo").textContent="Could not locate ("+err.message+"). Pick a station manually.";
   }, { enableHighAccuracy:true, timeout:10000, maximumAge:30000 });
 });
 
-/* ---------- אתחול ---------- */
+/* ---------- Init ---------- */
 (function init(){
-  $("stationSel").innerHTML = S.STATIONS.map((s,i)=>{
-    const tag = S.STOPS.nozomi.has(i) ? " — ראשית" : (S.STOPS.hikari.has(i) ? "" : " ⭐ מומלצת לצילום");
-    return `<option value="${s.id}">${s.name} ${s.jp}${tag}</option>`;
+  $("stationSel").innerHTML = S.STATIONS.map((st,i)=>{
+    const tag = S.STOPS.nozomi.has(i) ? " — major stop" : (S.STOPS.hikari.has(i) ? "" : " ⭐ great for photos");
+    return `<option value="${st.id}">${st.name} ${st.jp}${tag}</option>`;
   }).join("");
   $("stationSel").addEventListener("change", e=> selectStation(S.indexOfId(e.target.value)));
   $("srcSeg").addEventListener("click", e=>{

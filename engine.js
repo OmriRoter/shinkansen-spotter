@@ -13,26 +13,25 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  /* קו טוקאידו שינקנסן — index 0 = טוקיו (מזרח) עד שין-אוסקה (מערב).
-     navitimeId/jrId שמורים כדי לבנות כתובות scraping יציבות עבור Bright Data. */
+  /* Tokaido Shinkansen — index 0 = Tokyo (east) to Shin-Osaka (west). */
   const STATIONS = [
-    { id:"tokyo",       name:"טוקיו",          jp:"東京",     lat:35.6812, lon:139.7671 },
-    { id:"shinagawa",   name:"שינגאווה",       jp:"品川",     lat:35.6285, lon:139.7387 },
-    { id:"shinyokohama",name:"שין-יוקוהמה",    jp:"新横浜",   lat:35.5079, lon:139.6173 },
-    { id:"odawara",     name:"אודוארה",        jp:"小田原",   lat:35.2563, lon:139.1556 },
-    { id:"atami",       name:"אטאמי",          jp:"熱海",     lat:35.1031, lon:139.0781 },
-    { id:"mishima",     name:"מישימה",         jp:"三島",     lat:35.1267, lon:138.9111 },
-    { id:"shinfuji",    name:"שין-פוג'י",      jp:"新富士",   lat:35.1417, lon:138.6633 },
-    { id:"shizuoka",    name:"שיזואוקה",       jp:"静岡",     lat:34.9719, lon:138.3886 },
-    { id:"kakegawa",    name:"קקגאווה",        jp:"掛川",     lat:34.7692, lon:137.9986 },
-    { id:"hamamatsu",   name:"הממאטסו",        jp:"浜松",     lat:34.7036, lon:137.7347 },
-    { id:"toyohashi",   name:"טויוהאשי",       jp:"豊橋",     lat:34.7628, lon:137.3819 },
-    { id:"mikawaanjo",  name:"מיקאווה-אנג'ו",  jp:"三河安城", lat:34.9367, lon:137.0594 },
-    { id:"nagoya",      name:"נגויה",          jp:"名古屋",   lat:35.1706, lon:136.8816 },
-    { id:"gifuhashima", name:"גיפו-האשימה",    jp:"岐阜羽島", lat:35.3156, lon:136.6861 },
-    { id:"maibara",     name:"מאיבארה",        jp:"米原",     lat:35.3147, lon:136.2894 },
-    { id:"kyoto",       name:"קיוטו",          jp:"京都",     lat:34.9858, lon:135.7589 },
-    { id:"shinosaka",   name:"שין-אוסקה",      jp:"新大阪",   lat:34.7333, lon:135.5003 },
+    { id:"tokyo",       name:"Tokyo",        jp:"東京",     lat:35.6812, lon:139.7671 },
+    { id:"shinagawa",   name:"Shinagawa",    jp:"品川",     lat:35.6285, lon:139.7387 },
+    { id:"shinyokohama",name:"Shin-Yokohama",jp:"新横浜",   lat:35.5079, lon:139.6173 },
+    { id:"odawara",     name:"Odawara",      jp:"小田原",   lat:35.2563, lon:139.1556 },
+    { id:"atami",       name:"Atami",        jp:"熱海",     lat:35.1031, lon:139.0781 },
+    { id:"mishima",     name:"Mishima",      jp:"三島",     lat:35.1267, lon:138.9111 },
+    { id:"shinfuji",    name:"Shin-Fuji",    jp:"新富士",   lat:35.1417, lon:138.6633 },
+    { id:"shizuoka",    name:"Shizuoka",     jp:"静岡",     lat:34.9719, lon:138.3886 },
+    { id:"kakegawa",    name:"Kakegawa",     jp:"掛川",     lat:34.7692, lon:137.9986 },
+    { id:"hamamatsu",   name:"Hamamatsu",    jp:"浜松",     lat:34.7036, lon:137.7347 },
+    { id:"toyohashi",   name:"Toyohashi",    jp:"豊橋",     lat:34.7628, lon:137.3819 },
+    { id:"mikawaanjo",  name:"Mikawa-Anjo",  jp:"三河安城", lat:34.9367, lon:137.0594 },
+    { id:"nagoya",      name:"Nagoya",       jp:"名古屋",   lat:35.1706, lon:136.8816 },
+    { id:"gifuhashima", name:"Gifu-Hashima", jp:"岐阜羽島", lat:35.3156, lon:136.6861 },
+    { id:"maibara",     name:"Maibara",      jp:"米原",     lat:35.3147, lon:136.2894 },
+    { id:"kyoto",       name:"Kyoto",        jp:"京都",     lat:34.9858, lon:135.7589 },
+    { id:"shinosaka",   name:"Shin-Osaka",   jp:"新大阪",   lat:34.7333, lon:135.5003 },
   ];
   const N = STATIONS.length;
 
@@ -67,8 +66,8 @@
           - Math.sin(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.cos(toRad(b.lon-a.lon));
     return (toDeg(Math.atan2(y,x))+360)%360;
   }
-  const COMPASS_HE = ["צפון","צפון-מזרח","מזרח","דרום-מזרח","דרום","דרום-מערב","מערב","צפון-מערב"];
-  const compass = deg => COMPASS_HE[Math.round(deg/45)%8];
+  const COMPASS_EN = ["N","NE","E","SE","S","SW","W","NW"];
+  const compass = deg => COMPASS_EN[Math.round(deg/45)%8];
 
   const CUM = (()=>{ const c=[0]; for(let i=1;i<N;i++) c[i]=c[i-1]+haversine(STATIONS[i-1],STATIONS[i]); return c; })();
 
