@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0b1020" />
+<title>צייד שינקנסן 🚄 — Bullet Train Spotter</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#121a33; --card:#17203f; --card2:#1d2950;
+    --txt:#e8edff; --muted:#93a0c8; --accent:#41d1ff; --accent2:#7c5cff;
+    --ok:#27d499; --warn:#ffb020; --bad:#ff5470; --line:#2a3666;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,
+      "Noto Sans Hebrew","Apple Color Emoji",sans-serif;
+    background:radial-gradient(1200px 800px at 80% -10%,#1b2a55 0,transparent 60%),
+      linear-gradient(160deg,var(--bg),#070a16 70%);
+    background-color:var(--bg);
+    color:var(--txt); min-height:100vh; line-height:1.5;
+    padding:14px; padding-bottom:40px;
+  }
+  .wrap{max-width:620px; margin:0 auto;}
+  header h1{font-size:22px; margin:6px 0 2px; letter-spacing:.3px;}
+  header p.sub{margin:0 0 14px; color:var(--muted); font-size:13px;}
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--line); border-radius:18px; padding:16px;
+    margin-bottom:14px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .row{display:flex; gap:10px; align-items:center;}
+  .between{justify-content:space-between;}
+  .muted{color:var(--muted);} .small{font-size:12px;}
+  .pill{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+    padding:4px 10px; border-radius:999px; background:#0e1530; border:1px solid var(--line);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+  .dot.live{background:var(--ok); animation:pulse 1.8s infinite;}
+  .dot.bright{background:var(--accent2); animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(39,212,153,.5)}70%{box-shadow:0 0 0 8px rgba(39,212,153,0)}100%{box-shadow:0 0 0 0 rgba(39,212,153,0)}}
+  select,button{font-family:inherit; font-size:14px;}
+  select{background:#0e1530; color:var(--txt); border:1px solid var(--line);
+    border-radius:12px; padding:9px 12px; width:100%; appearance:none;}
+  button{background:linear-gradient(180deg,var(--accent),#1aa9e0); color:#04121c; border:none;
+    border-radius:12px; padding:11px 14px; font-weight:700; cursor:pointer; width:100%;}
+  button.ghost{background:#0e1530; color:var(--txt); border:1px solid var(--line); font-weight:600;}
+  label.fld{display:block; font-size:12px; color:var(--muted); margin:0 0 6px;}
+  .seg{display:flex; gap:6px; background:#0e1530; border:1px solid var(--line); border-radius:12px; padding:4px;}
+  .seg button{background:transparent; color:var(--muted); padding:7px 10px; font-weight:600; border-radius:9px;}
+  .seg button.on{background:var(--accent2); color:#fff;}
+  .hero .train-type{font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;}
+  .hero .countdown{font-size:54px; font-weight:800; line-height:1; margin:6px 0 2px; font-variant-numeric:tabular-nums;}
+  .hero .eta{color:var(--muted); font-size:13px;}
+  .badge{font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px;}
+  .badge.nozomi{background:#3a1d52; color:#e6b3ff;}
+  .badge.hikari{background:#143a52; color:#9fe3ff;}
+  .badge.down{background:#13324a; color:#9ad7ff;}
+  .badge.up{background:#0f3a2e; color:#9af0cf;}
+  .compass{width:120px; height:120px; border-radius:50%; flex:0 0 auto;
+    background:radial-gradient(circle at 50% 50%,#0e1530,#0a1126); border:2px solid var(--line); position:relative;}
+  .compass .tick{position:absolute; color:var(--muted); font-size:10px; font-weight:700;}
+  .compass .n{top:4px; left:50%; transform:translateX(-50%); color:var(--bad);}
+  .compass .s{bottom:4px; left:50%; transform:translateX(-50%);}
+  .compass .e{left:6px; top:50%; transform:translateY(-50%);}
+  .compass .w{right:6px; top:50%; transform:translateY(-50%);}
+  .arrow{position:absolute; left:50%; top:50%; width:0; height:0; transform-origin:center;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1);}
+  .arrow::before{content:""; position:absolute; left:-7px; top:-46px;
+    border-left:7px solid transparent; border-right:7px solid transparent;
+    border-bottom:20px solid var(--accent); filter:drop-shadow(0 0 6px rgba(65,209,255,.7));}
+  .arrow::after{content:""; position:absolute; left:-2px; top:-26px; width:4px; height:30px;
+    background:var(--accent); border-radius:2px;}
+  .kv{display:flex; flex-direction:column; gap:2px;}
+  .kv .k{font-size:11px; color:var(--muted);} .kv .v{font-size:14px; font-weight:600;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .banner{border-radius:14px; padding:12px 14px; font-weight:600; display:flex; gap:10px; align-items:flex-start;}
+  .banner.clear{background:rgba(39,212,153,.12); border:1px solid rgba(39,212,153,.4); color:#b6ffe6;}
+  .banner.blocked{background:rgba(255,84,112,.12); border:1px solid rgba(255,84,112,.45); color:#ffc6d1;}
+  .banner .ico{font-size:20px; line-height:1;}
+  ul.list{list-style:none; margin:0; padding:0;}
+  ul.list li{display:flex; justify-content:space-between; align-items:center; padding:10px 2px; border-bottom:1px solid var(--line);}
+  ul.list li:last-child{border-bottom:none;}
+  .li-left{display:flex; gap:10px; align-items:center;}
+  .li-time{font-variant-numeric:tabular-nums; font-weight:700; min-width:54px;}
+  .disclaimer{font-size:11px; color:var(--muted); line-height:1.6; margin-top:6px;}
+  a{color:var(--accent);}
+  .spin{display:inline-block; animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🚄 צייד שינקנסן</h1>
+    <p class="sub">מזהה את התחנה הקרובה אליך ביפן ואומר מתי הרכבת המהירה הבאה <b>חולפת בלי לעצור</b> — ומאיזה כיוון לכוון את המצלמה.</p>
+  </header>
+
+  <div class="card">
+    <div class="row between" style="margin-bottom:12px;">
+      <span class="pill"><span id="liveDot" class="dot"></span><span id="liveLbl">לא מחובר</span></span>
+      <span class="small muted" id="clock">--:--:--</span>
+    </div>
+    <button id="btnLocate">📍 אתר אותי לפי GPS</button>
+    <div style="height:10px"></div>
+    <label class="fld" for="stationSel">או בחר תחנה ידנית (קו טוקאידו שינקנסן):</label>
+    <select id="stationSel"></select>
+
+    <div class="row between" style="margin-top:12px;">
+      <label class="fld" style="margin:0;">מקור נתונים</label>
+      <div class="seg" id="srcSeg">
+        <button data-src="sim" class="on">סימולציה</button>
+        <button data-src="live">חי · Bright Data</button>
+      </div>
+    </div>
+    <div id="locInfo" class="small muted" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card hero" id="heroCard">
+    <div class="row between" style="align-items:flex-start;">
+      <div>
+        <div class="train-type" id="heroType">—</div>
+        <div class="countdown" id="heroCountdown">--:--</div>
+        <div class="eta" id="heroEta">בחר תחנה כדי להתחיל</div>
+        <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;" id="heroBadges"></div>
+      </div>
+      <div class="compass" id="compass">
+        <span class="tick n">צ</span><span class="tick s">ד</span>
+        <span class="tick e">מז</span><span class="tick w">מע</span>
+        <div class="arrow" id="arrow"></div>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:16px;">
+      <div class="kv"><span class="k">מגיעה מכיוון</span><span class="v" id="kvFrom">—</span></div>
+      <div class="kv"><span class="k">כיוון נסיעה</span><span class="v" id="kvDir">—</span></div>
+      <div class="kv"><span class="k">מסלול / רציף</span><span class="v" id="kvTrack">—</span></div>
+      <div class="kv"><span class="k">מהירות משוערת</span><span class="v" id="kvSpeed">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="banner clear" id="blockBanner">
+      <span class="ico">✅</span>
+      <div><div id="blockTitle">המסלול פנוי</div><div class="small" id="blockDesc" style="font-weight:400; opacity:.9;"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row between" style="margin-bottom:8px;">
+      <b>חלופות קרובות (לא עוצרות)</b>
+      <span class="small muted" id="upTitleStation"></span>
+    </div>
+    <ul class="list" id="upList"><li class="muted small">—</li></ul>
+  </div>
+
+  <div class="disclaimer" id="disclaimer">
+    ℹ️ <b>מקור נתונים:</b> במצב <b>חי · Bright Data</b> השרת מושך לוחות-זמנים אמיתיים דרך Bright Data Web Unlocker
+    (עוקף את חסימת ה-403/anti-bot של אתרי JR) ומחשב זמן-מעבר באינטרפולציה. ללא טוקן Bright Data,
+    או בכשל גרידה, האפליקציה נופלת אוטומטית ל<b>מנוע סימולציה</b> המבוסס על דפוסי קו טוקאידו האמיתיים.
+    <b>לבטיחות — לעולם אל תתקרב מעבר לקו הצהוב.</b>
+  </div>
+</div>
+
+<script src="./engine.js"></script>
+<script>
+"use strict";
+const S = window.Spotter;
+const $ = id => document.getElementById(id);
+
+let stationIdx = S.indexOfId("odawara");
+let events = [];
+let dataSource = "sim";        // "sim" | "live"
+let lastSourceLabel = "סימולציה";
+
+function nowMinutes(){ const d=new Date(); return d.getHours()*60 + d.getMinutes() + d.getSeconds()/60; }
+function fmtClock(min){ const h=Math.floor(min/60)%24, m=Math.floor(min%60); return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
+function fmtCountdown(mins){ if(mins<0)mins=0; const t=Math.round(mins*60); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
+function destName(dir){ return dir==="down" ? S.STATIONS[S.N-1].name : S.STATIONS[0].name; }
+
+async function loadEvents(){
+  if(dataSource==="live"){
+    try{
+      const r = await fetch("/api/next-trains?station="+S.STATIONS[stationIdx].id);
+      const j = await r.json();
+      events = j.events || [];
+      lastSourceLabel = j.source==="brightdata" ? "חי · Bright Data" : "סימולציה (fallback)";
+      setSrcDot(j.source);
+      if(j.source!=="brightdata") $("locInfo").innerHTML =
+        "ℹ️ אין טוקן Bright Data בשרת — מוצגת סימולציה. ראה <code>.env.example</code>.";
+    }catch(e){
+      events = S.buildSimEvents(stationIdx); lastSourceLabel="סימולציה (אין שרת)"; setSrcDot(null);
+      $("locInfo").innerHTML = "⚠️ אין שרת פעיל (פתח דרך <code>npm start</code> כדי להפעיל מצב חי). מוצגת סימולציה.";
+    }
+  } else {
+    events = S.buildSimEvents(stationIdx); lastSourceLabel="סימולציה"; setSrcDot("sim");
+  }
+  render();
+}
+function setSrcDot(source){
+  const dot=$("liveDot"), lbl=$("liveLbl");
+  if(source==="brightdata"){ dot.className="dot bright"; lbl.textContent="חי · Bright Data"; }
+  else if(source==="sim"){ dot.className="dot"; lbl.textContent="סימולציה"; }
+  else { dot.className="dot live"; lbl.textContent=lastSourceLabel; }
+}
+
+function selectStation(idx){
+  stationIdx=idx; $("stationSel").value=S.STATIONS[idx].id;
+  $("upTitleStation").textContent = S.STATIONS[idx].name+" "+S.STATIONS[idx].jp;
+  loadEvents();
+}
+
+function render(){
+  $("clock").textContent = new Date().toLocaleTimeString("he-IL");
+  const t = nowMinutes();
+  const passes = events.filter(e => !e.stops && e.timeMin>t && (e.type==="nozomi"||e.type==="hikari"));
+  const next = passes[0];
+  const s = S.STATIONS[stationIdx];
+  const isMajorStop = S.STOPS.nozomi.has(stationIdx);
+
+  if(!next){
+    $("heroType").textContent = isMajorStop ? "תחנה ראשית — הרכבות המהירות עוצרות כאן" : "אין עוד חלופות כרגע";
+    $("heroCountdown").textContent="--:--";
+    $("heroEta").textContent = isMajorStop
+      ? "ב-"+s.name+" כל ה-Nozomi עוצרות; כמעט אין רכבות חולפות. נסה תחנת-ביניים (אודוארה / מישימה / מאיבארה)."
+      : "אין נתוני מעבר עתידיים. נסה לרענן או החלף מקור נתונים.";
+    $("heroBadges").innerHTML=""; $("arrow").style.transform="translate(-50%,-50%) rotate(0deg)";
+    ["kvFrom","kvDir","kvTrack","kvSpeed"].forEach(k=>$(k).textContent="—");
+    setBanner(null); renderList(passes); return;
+  }
+
+  const m=S.TRAIN_META[next.type], dt=next.timeMin-t;
+  $("heroType").textContent = next.type==="nozomi" ? "הרכבת המהירה הבאה חולפת בעוד" : "רכבת חולפת בעוד";
+  $("heroCountdown").textContent = fmtCountdown(dt);
+  $("heroEta").textContent = "חולפת בשעה "+fmtClock(next.timeMin)+" · "+m.label+" · מקור: "+lastSourceLabel;
+  $("heroBadges").innerHTML =
+    `<span class="badge ${m.cls}">${m.label}</span>`+
+    `<span class="badge ${next.dir}">${next.dir==="down"?"יורדת ▶ "+destName("down"):"עולה ▶ "+destName("up")}</span>`;
+
+  const appr = S.approachBearing(stationIdx, next.dir);
+  $("kvFrom").textContent = S.compass(appr)+" ("+Math.round(appr)+"°)";
+  $("kvDir").textContent = next.dir==="down" ? "מערבה (יורדת) → "+destName("down") : "מזרחה (עולה) → "+destName("up");
+  $("kvTrack").textContent = next.dir==="down" ? "מסלול יורד · עמוד בצד הדרומי" : "מסלול עולה · עמוד בצד הצפוני";
+  $("kvSpeed").textContent = "~"+m.cruise+" קמ\"ש";
+  $("arrow").style.transform = "translate(-50%,-50%) rotate("+appr+"deg)";
+
+  setBanner(S.blockingTrain(events, next.timeMin, next.dir));
+  renderList(passes);
+}
+
+function setBanner(blk){
+  const b=$("blockBanner");
+  if(!blk){
+    b.className="banner clear"; b.querySelector(".ico").textContent="✅";
+    $("blockTitle").textContent="המסלול פנוי — אין רכבת עומדת שתסתיר";
+    $("blockDesc").textContent="לא צפויה רכבת עוצרת באותו צד רציף בזמן החליפה.";
+  } else {
+    const m=S.TRAIN_META[blk.type];
+    b.className="banner blocked"; b.querySelector(".ico").textContent="⛔";
+    $("blockTitle").textContent="שים לב: רכבת "+m.label.split(" ")[1]+" עומדת ברציף ועלולה להסתיר!";
+    $("blockDesc").textContent="רכבת "+m.label+" עוצרת באותו צד עד ~"+fmtClock(blk.until)+". עבור לצד השני של הרציף או לתחנת-ביניים פתוחה.";
+  }
+}
+
+function renderList(passes){
+  const t=nowMinutes(), ul=$("upList"), items=passes.slice(0,7);
+  if(!items.length){ ul.innerHTML='<li class="muted small">אין חלופות נוספות כרגע</li>'; return; }
+  ul.innerHTML = items.map(e=>{
+    const m=S.TRAIN_META[e.type], blk=S.blockingTrain(events, e.timeMin, e.dir);
+    const dirLbl = e.dir==="down" ? "▶ "+destName("down") : "◀ "+destName("up");
+    return `<li><span class="li-left"><span class="li-time">${fmtClock(e.timeMin)}</span>`+
+      `<span class="badge ${m.cls}">${m.label.split(" ")[1]}</span>`+
+      `<span class="small muted">${dirLbl}</span></span>`+
+      `<span class="small">${blk?'⛔ <span style="color:var(--bad)">חסום</span>':'✅ <span style="color:var(--ok)">פנוי</span>'} · בעוד ${Math.round(e.timeMin-t)} ד'</span></li>`;
+  }).join("");
+}
+
+/* ---------- GPS ---------- */
+$("btnLocate").addEventListener("click", ()=>{
+  if(!navigator.geolocation){ $("locInfo").textContent="הדפדפן לא תומך באיתור מיקום."; return; }
+  $("btnLocate").innerHTML='<span class="spin">◌</span> מאתר מיקום…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude:lat, longitude:lon}=pos.coords;
+    const {idx,dist}=S.nearestStation(lat,lon);
+    selectStation(idx);
+    const inJapan = lat>24 && lat<46 && lon>122 && lon<154;
+    $("btnLocate").textContent="📍 אתר אותי לפי GPS";
+    $("locInfo").innerHTML = (inJapan?"":"⚠️ נראה שאתה לא ביפן — מציג הדגמה. ")+
+      "התחנה הקרובה: <b>"+S.STATIONS[idx].name+"</b> ("+S.STATIONS[idx].jp+") · "+dist.toFixed(1)+" ק\"מ ממך.";
+  }, err=>{
+    $("btnLocate").textContent="📍 אתר אותי לפי GPS";
+    $("locInfo").textContent="לא ניתן לאתר ("+err.message+"). בחר תחנה ידנית.";
+  }, { enableHighAccuracy:true, timeout:10000, maximumAge:30000 });
+});
+
+/* ---------- אתחול ---------- */
+(function init(){
+  $("stationSel").innerHTML = S.STATIONS.map((s,i)=>{
+    const tag = S.STOPS.nozomi.has(i) ? " — ראשית" : (S.STOPS.hikari.has(i) ? "" : " ⭐ מומלצת לצילום");
+    return `<option value="${s.id}">${s.name} ${s.jp}${tag}</option>`;
+  }).join("");
+  $("stationSel").addEventListener("change", e=> selectStation(S.indexOfId(e.target.value)));
+  $("srcSeg").addEventListener("click", e=>{
+    const b=e.target.closest("button[data-src]"); if(!b) return;
+    [...$("srcSeg").children].forEach(x=>x.classList.remove("on")); b.classList.add("on");
+    dataSource=b.dataset.src; loadEvents();
+  });
+  selectStation(stationIdx);
+  setInterval(render, 1000);
+})();
+</script>
+</body>
+</html>
