@@ -1,86 +1,86 @@
-# 🚄 צייד שינקנסן — Bullet Train Spotter
+# 🚄 Shinkansen Spotter
 
-אפליקציה שעוזרת לצלם רכבות שינקנסן מהירות **שחולפות בתחנה בלי לעצור**: מאתרת את התחנה
-הקרובה אליך ביפן, מציגה בזמן אמת מתי הרכבת המהירה הבאה חולפת, מאיזה כיוון (מצפן),
-ומזהירה אם רכבת עומדת בתחנה עלולה להסתיר את הצילום.
+Stand on a Japanese Shinkansen platform and see **when the next bullet train blasts
+through without stopping** — which direction it comes from, which side to point your
+camera, and a live countdown. Built for trainspotters and photographers.
 
-עובדת בשני מצבים:
-- **סימולציה** (offline, ללא תלות) — מנוע דטרמיניסטי לפי דפוסי קו טוקאידו האמיתיים.
-- **חי · Bright Data** — מושך לוחות-זמנים אמיתיים דרך **Bright Data Web Unlocker** ומחשב זמני מעבר.
+**Live:** https://shinkansen-spotter.vercel.app/
 
----
+A non-stopping train never appears in a station's departure board, so the app
+**interpolates its pass-through time** from the timetables of the surrounding hub
+stations where it *does* stop. Live timetables are scraped from public NAVITIME
+pages through the Bright Data Web Unlocker; if that's unavailable it falls back to a
+deterministic simulation, so the UI always works.
 
-## למה צריך את Bright Data (ממצאי המחקר)
+## Features
 
-כדי לדעת מתי רכבת *חולפת* בתחנה שבה היא לא עוצרת צריך נתונים אמיתיים. בדקתי את המקורות:
+- **5 lines:** Tokaido, Sanyo, Tohoku, Kyushu, Hokuriku (84 stations).
+- **Auto-locate** the nearest station across all lines via GPS.
+- **Pass-through countdown** with train type (Nozomi/Mizuho/Hayabusa/…), destination
+  and estimated speed.
+- **Platform aware:** pick which side you're on to see the trains in front of you,
+  with the opposite "far track" shown separately.
+- **Live device compass:** the dial turns with your phone and tells you whether the
+  train enters from your **left / right / ahead**.
+- **Blocking alert:** warns when a stopping train on your platform (with its real
+  platform number) may hide the shot.
+- Japan-time (JST) clock, 5-minute auto-refresh, CDN + in-memory caching.
 
-| מקור | מה יש בו | הבעיה ל-scraper רגיל |
-|------|----------|----------------------|
-| [JR Central — מיקום רכבות חי](https://traininfo.jr-central.co.jp/shinkansen/pc/ja/ti08.html) | מיקום בזמן-אמת של כל רכבת בקו טוקאידו + עיכובים | **מחזיר 403 Forbidden** ל-fetch רגיל (אימתתי) — חומת anti-bot |
-| [NAVITIME](https://japantravel.navitime.com/en/area/jp/timetable/00006668/00000110) | לו"ז מלא לכל רכבת Nozomi/Hikari בנפרד | מרונדר ב-JS + הגנת bot |
-| [JR-West train-guide](https://www.train-guide.westjr.co.jp/) | feed מיקום חי לקו סאניו | JS כבד, חוסם scraping |
-
-המסקנה: הדפים הרשמיים חוסמים גרידה רגילה. **Bright Data Web Unlocker עוקף 403/CAPTCHA/חסימות-גאו ומחזיר HTML נקי** — וזה בדיוק מה ש"Bright Data MCP" עוטף מאחורי הקלעים.
-
-> רכבת שלא עוצרת **לא מופיעה** בלוח-היציאות של התחנה. לכן מחשבים את זמן-המעבר
-> ב**אינטרפולציה לפי מרחק** בין שתי תחנות-העצירה שעוטפות אותה (`Spotter.interpolatePass`).
-
----
-
-## ארכיטקטורה
+## How it works
 
 ```
-engine.js                 מקור-אמת משותף (browser + Node): תחנות, דפוסי עצירה,
-                          חישוב מעבר/כיוון/מצפן/חסימה. פורמט אירוע: {type,dir,timeMin,stops}
-index.html                ה-UI. טוען engine.js. בורר "סימולציה / חי".
-server/index.js           proxy: מגיש את ה-UI + /api/next-trains + /api/health
-server/brightdata.js      לקוח Bright Data Web Unlocker (REST: POST api.brightdata.com/request)
-server/scrape-navitime.js מושך לו"ז דרך Bright Data → אינטרפולציה → אירועי-מעבר
+lines-data.js   station + stop data for every line (generated from data/lines.json)
+engine.js       shared logic: geometry, nearest-station, simulation, interpolation,
+                blocking — exposes a per-line "view". Runs in browser and Node.
+index.html      the UI (loads lines-data.js + engine.js)
+api/next-trains.js  serverless function: scrapes NAVITIME via Bright Data, brackets
+                each pass-through between the nearest hubs it stops at, caches results.
+                The Bright Data token is read only from server env — never sent to the browser.
+server/index.js     local dev server; delegates /api/next-trains to the same handler
+data/lines.json     source-of-truth dataset (node ids, names, kanji, coords, stop patterns)
+tools/build-lines.js  regenerates lines-data.js from data/lines.json
 ```
 
-זרימת בקשה במצב חי: `index.html → /api/next-trains?station=odawara →
-scrape-navitime (Bright Data unlock) → אירועים → אותו UI`. בכל כשל (אין טוקן /
-גרידה נכשלה / 0 תוצאות) — **נפילה רכה אוטומטית לסימולציה**, כך שה-UI תמיד עובד.
+Request flow (live): `index.html → /api/next-trains?line=&station= → Bright Data
+(NAVITIME) → interpolated pass-through events → UI`. On any failure (no token, scrape
+error, 0 results) it falls back to the simulation engine automatically.
 
----
+## Run locally
 
-## הרצה
-
-### מצב סימולציה בלבד (ללא התקנה)
-פותחים את `index.html` ישירות בדפדפן.
-
-### מצב מלא עם שרת + Bright Data
 ```bash
-cd shinkansen-spotter
-cp .env.example .env          # מלא BRIGHTDATA_API_TOKEN ו-BRIGHTDATA_ZONE
-npm start                     # http://localhost:8080
-npm test                      # בדיקות המנוע והפענוח
-```
-דורש Node ≥ 18 (משתמש ב-`fetch` המובנה). אין dependencies חיצוניים.
-
-### חיבור Bright Data
-1. ב-[brightdata.com](https://brightdata.com) צור **Web Unlocker zone**.
-2. העתק את ה-API token ושם ה-zone אל `.env`:
-   ```
-   BRIGHTDATA_API_TOKEN=xxxxxxxx
-   BRIGHTDATA_ZONE=web_unlocker1
-   ```
-3. `npm start` ירשום `Bright Data: configured ✓`. הבורר "חי" יתחיל למשוך נתונים אמיתיים.
-
-ה-API שבו השרת משתמש (זהה למה שה-MCP עושה):
-```
-POST https://api.brightdata.com/request
-Authorization: Bearer <TOKEN>
-{ "zone": "<zone>", "url": "<target>", "format": "raw", "country": "jp" }
+npm install            # no external dependencies
+cp .env.example .env    # add BRIGHTDATA_API_TOKEN + BRIGHTDATA_ZONE for live data
+npm start               # http://localhost:8080
+npm test                # engine + parser sanity checks
 ```
 
----
+Without a Bright Data token it runs in simulation mode. Node ≥ 18 (uses built-in `fetch`).
 
-## שדרוגים אפשריים
-- **מעבר ל-JR Central running-position (ti08)** עם `renderJs:true` (Browser API) לקבלת
-  מיקומי-רכבת חיים + עיכובים אמיתיים במקום אינטרפולציה.
-- הוספת קווים: Sanyo, Tohoku, Hokuriku (להוסיף ל-`STATIONS`/`STOPS` ב-engine.js).
-- cache קצר (30-60ש') בשרת כדי לחסוך קריאות Bright Data.
+## Deploy
 
-## ⚠️ בטיחות
-כלי הדגמה. **לעולם אל תתקרב מעבר לקו הצהוב.** רכבות חולפות במהירות גבוהה מאוד.
+Vercel (static front-end + the `api/next-trains.js` function). Set the project env vars
+`BRIGHTDATA_API_TOKEN` and `BRIGHTDATA_ZONE`, then push. Responses are CDN-cached
+(`s-maxage=1800`) and hub timetable boards are cached in-memory and shared across
+stations, so live scraping stays minimal under load.
+
+## Updating / extending the data
+
+`data/lines.json` is the source of truth. After editing it (or re-harvesting), run
+`npm run build:data` to regenerate `lines-data.js`. Adding a line = adding its stations,
+stop patterns, and a hub set in `data/lines.json` + `tools/build-lines.js`.
+
+## Limitations (honest)
+
+- Pass-through times are **estimates** (distance interpolation, ~±1 minute) — JR
+  publishes platforms only for *stopping* trains, not the exact track a passing train uses.
+- **Scheduled** timetables only; real-time delays are not reflected.
+- Bearings are computed from station coordinates, approximating track curves.
+
+## ⚠️ Safety
+
+A spotting tool. **Never cross beyond the yellow tactile line.** Bullet trains pass at
+very high speed.
+
+## License
+
+MIT.

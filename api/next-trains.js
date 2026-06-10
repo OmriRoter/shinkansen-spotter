@@ -54,33 +54,56 @@ async function fetchBoard(view, idx, dir) {
   return rows;
 }
 
+// run async tasks with bounded concurrency (protects against Bright Data rate limits
+// on a cold cache; warm hub boards are cache hits and return instantly)
+async function pool(tasks, limit) {
+  const out = new Array(tasks.length); let i = 0;
+  await Promise.all(Array(Math.min(limit, tasks.length)).fill(0).map(async () => {
+    while (i < tasks.length) { const k = i++; out[k] = await tasks[k](); }
+  }));
+  return out;
+}
+
 async function buildLiveEvents(view, idx) {
-  const events = [], hubs = view.hubs();
+  const hubs = view.hubs();
+  // Fetch the station's own board + every hub board, both directions.
+  // Hub boards are cached and shared across all stations on the line, so after the
+  // first lookup each extra station costs only its own board.
+  const plan = [];
   for (const dir of ["down", "up"]) {
-    const before = [...hubs].reverse().find((i) => i < idx);
-    const after = hubs.find((i) => i > idx);
-    const wrap = before != null && after != null;
-    const [own, b1, b2] = await Promise.all([
-      fetchBoard(view, idx, dir),
-      wrap ? fetchBoard(view, before, dir) : Promise.resolve([]),
-      wrap ? fetchBoard(view, after, dir) : Promise.resolve([]),
-    ]);
+    plan.push({ dir, at: idx, own: true });
+    for (const h of hubs) if (h !== idx) plan.push({ dir, at: h, own: false });
+  }
+  const boards = await pool(plan.map((p) => () => fetchBoard(view, p.at, p.dir)), 8);
+  const byDir = { down: { own: [], hubs: [] }, up: { own: [], hubs: [] } };
+  plan.forEach((p, i) => { if (p.own) byDir[p.dir].own = boards[i]; else byDir[p.dir].hubs.push({ h: p.at, rows: boards[i] }); });
+
+  const events = [];
+  for (const dir of ["down", "up"]) {
+    const own = byDir[dir].own, ownNames = new Set(own.map((r) => r.name));
     for (const r of own) events.push({ type: r.type, dir, timeMin: r.depMin, stops: true, dest: r.dest, platform: r.platform });
-    if (wrap) {
-      const ownNames = new Set(own.map((r) => r.name)), map = new Map();
-      for (const r of b1) map.set(r.name, { before: r.depMin, type: r.type, dest: r.dest });
-      for (const r of b2) { const e = map.get(r.name); if (e) e.after = r.depMin; }
-      for (const [name, e] of map) {
-        if (e.before == null || e.after == null || ownNames.has(name)) continue;
-        // board times are departures; subtract the destination-side hub's dwell to
-        // recover its arrival (Osaka/west side going down, Tokyo/east side going up).
-        const dwell = Spotter.meta(e.type).dwell || 0;
-        const bT = dir === "up" ? e.before - dwell : e.before;
-        const aT = dir === "down" ? e.after - dwell : e.after;
-        const t = view.interpolatePass([{ idx: before, timeMin: bT }, { idx: after, timeMin: aT }], idx, dir);
-        if (t == null) continue;
-        events.push({ type: e.type, dir, timeMin: t, stops: false, dest: e.dest });
+    // where each non-stopping train appears across the hubs
+    const appear = new Map();
+    for (const { h, rows } of byDir[dir].hubs) for (const r of rows) {
+      if (!appear.has(r.name)) appear.set(r.name, []);
+      appear.get(r.name).push({ h, depMin: r.depMin, type: r.type, dest: r.dest });
+    }
+    for (const [name, arr] of appear) {
+      if (ownNames.has(name)) continue;                 // it stops here → not a pass-through
+      let before = null, after = null;                  // nearest hub it stops at on each side
+      for (const a of arr) {
+        if (a.h < idx && (!before || a.h > before.h)) before = a;
+        if (a.h > idx && (!after || a.h < after.h)) after = a;
       }
+      if (!before || !after) continue;
+      // board times are departures; subtract the destination-side hub's dwell to
+      // recover its arrival (Osaka/west going down, Tokyo/east going up).
+      const dwell = Spotter.meta(before.type).dwell || 0;
+      const bT = dir === "up" ? before.depMin - dwell : before.depMin;
+      const aT = dir === "down" ? after.depMin - dwell : after.depMin;
+      const t = view.interpolatePass([{ idx: before.h, timeMin: bT }, { idx: after.h, timeMin: aT }], idx, dir);
+      if (t == null) continue;
+      events.push({ type: before.type, dir, timeMin: t, stops: false, dest: before.dest });
     }
   }
   events.sort((a, b) => a.timeMin - b.timeMin);

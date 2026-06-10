@@ -1,11 +1,12 @@
 {
   "name": "shinkansen-spotter",
-  "version": "1.0.0",
-  "description": "Locate the nearest Japanese Shinkansen station and show when the next fast train passes through without stopping — with live data via Bright Data.",
+  "version": "1.1.0",
+  "description": "Stand on a Japanese Shinkansen platform and see when the next bullet train blasts through without stopping — across 5 lines, with live timetables.",
   "main": "server/index.js",
   "scripts": {
     "start": "node --env-file=.env server/index.js",
     "start:no-env": "node server/index.js",
+    "build:data": "node tools/build-lines.js",
     "test": "node test/engine.test.js"
   },
   "engines": { "node": ">=18" },
