@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0a0e17" />
+<title>Shinkansen Spotter</title>
+<style>
+  :root{
+    --bg:#0a0e17; --card:#121826; --card-soft:#161d2e; --line:rgba(255,255,255,.07);
+    --txt:#eef2fb; --muted:#8b97b4; --faint:#647092;
+    --accent:#5ec8ff; --accent2:#8b7bff;
+    --ok:#33d6a6; --warn:#ffc14d; --bad:#ff647c;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple Color Emoji",sans-serif;
+    background:var(--bg); color:var(--txt); min-height:100vh; line-height:1.5;
+    padding:18px 16px 48px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:560px; margin:0 auto;}
+  header{margin:4px 2px 18px;}
+  header h1{font-size:21px; font-weight:680; letter-spacing:-.01em; margin:0; display:flex; align-items:center; gap:8px;}
+  header p{margin:6px 0 0; color:var(--muted); font-size:13.5px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:14px;}
+  .row{display:flex; gap:10px; align-items:center;}
+  .between{justify-content:space-between;}
+  .muted{color:var(--muted);} .small{font-size:12.5px;}
+  .status{display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted);}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--faint); transition:background .3s;}
+  .dot.on{background:var(--ok); box-shadow:0 0 0 3px rgba(51,214,166,.16);}
+  .clock{font-size:12.5px; color:var(--faint); font-variant-numeric:tabular-nums;}
+  button{font-family:inherit; font-size:14.5px; cursor:pointer; border:none; border-radius:13px; padding:12px 14px; font-weight:600; width:100%; transition:transform .06s, background .2s, border-color .2s;}
+  button:active{transform:scale(.985);}
+  .btn-primary{background:var(--accent); color:#04121c; font-weight:700;}
+  .btn-ghost{background:transparent; color:var(--txt); border:1px solid var(--line);}
+  .btn-ghost.on{background:rgba(94,200,255,.12); border-color:rgba(94,200,255,.4); color:var(--accent);}
+  label.fld{display:block; font-size:12px; color:var(--muted); margin:14px 0 7px;}
+  select{font-family:inherit; font-size:14.5px; background:var(--card-soft); color:var(--txt); border:1px solid var(--line);
+    border-radius:13px; padding:12px 13px; width:100%; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%238b97b4' stroke-width='1.6'><path d='M4 6l4 4 4-4'/></svg>");
+    background-repeat:no-repeat; background-position:right 13px center; padding-right:38px;}
+  .hero .label{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
+  .countdown{font-size:60px; font-weight:760; line-height:1; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+  .eta{color:var(--muted); font-size:13px;}
+  .badges{margin-top:12px; display:flex; gap:6px; flex-wrap:wrap;}
+  .badge{font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:8px;}
+  .badge.nozomi{background:rgba(180,120,255,.16); color:#d8bcff;}
+  .badge.hikari{background:rgba(94,200,255,.16); color:#aee4ff;}
+  .badge.kodama{background:rgba(120,200,160,.16); color:#b6f0cf;}
+  .badge.dir{background:rgba(255,255,255,.07); color:var(--txt);}
+  .compass-box{width:116px; height:116px; flex:0 0 auto;}
+  .compass{width:116px; height:116px; border-radius:50%; position:relative; border:1.5px solid var(--line);
+    background:radial-gradient(circle at 50% 38%, rgba(94,200,255,.06), transparent 60%), var(--card-soft);
+    transition:transform .25s linear;}
+  .compass .tick{position:absolute; color:var(--faint); font-size:10px; font-weight:700;}
+  .compass .n{top:6px; left:50%; transform:translateX(-50%); color:var(--bad);}
+  .compass .s{bottom:6px; left:50%; transform:translateX(-50%);}
+  .compass .e{right:8px; top:50%; transform:translateY(-50%);}
+  .compass .w{left:8px; top:50%; transform:translateY(-50%);}
+  .arrow{position:absolute; left:50%; top:50%; width:0; height:0; transform-origin:center; transition:transform .6s cubic-bezier(.2,.8,.2,1);}
+  .arrow::before{content:""; position:absolute; left:-7px; top:-44px; border-left:7px solid transparent; border-right:7px solid transparent; border-bottom:19px solid var(--accent); filter:drop-shadow(0 0 6px rgba(94,200,255,.6));}
+  .arrow::after{content:""; position:absolute; left:-2px; top:-25px; width:4px; height:28px; background:var(--accent); border-radius:2px; opacity:.85;}
+  .passline{margin-top:14px; font-size:13.5px; font-weight:600; color:var(--txt);}
+  .passline .a{color:#aee4ff;} .passline .b{color:#b6f0cf;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px 12px; margin-top:16px;}
+  .kv .k{font-size:11px; color:var(--muted); display:block; margin-bottom:2px;}
+  .kv .v{font-size:14px; font-weight:600;}
+  .banner{border-radius:14px; padding:13px 15px; display:flex; gap:11px; align-items:flex-start;}
+  .banner.clear{background:rgba(51,214,166,.10); border:1px solid rgba(51,214,166,.28);}
+  .banner.blocked{background:rgba(255,100,124,.10); border:1px solid rgba(255,100,124,.32);}
+  .banner .ico{font-size:18px; line-height:1.2;}
+  .banner .t{font-weight:650; font-size:14px;}
+  .banner .d{font-size:12.5px; color:var(--muted); margin-top:2px; font-weight:400;}
+  .sec-title{font-size:13px; font-weight:680; margin:2px 2px 10px; color:var(--txt);}
+  ul.list{list-style:none; margin:0; padding:0;}
+  ul.list li{display:flex; justify-content:space-between; align-items:center; padding:11px 2px; border-bottom:1px solid var(--line);}
+  ul.list li:last-child{border-bottom:none;}
+  .li-left{display:flex; gap:10px; align-items:center;}
+  .li-time{font-variant-numeric:tabular-nums; font-weight:700; min-width:50px;}
+  .note{font-size:11.5px; color:var(--faint); text-align:center; margin-top:8px;}
+  .spin{display:inline-block; animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🚄 Shinkansen Spotter</h1>
+    <p>Find your nearest station and see when the next bullet train passes through without stopping — and where to point your camera.</p>
+  </header>
+
+  <div class="card">
+    <div class="row between" style="margin-bottom:14px;">
+      <span class="status"><span id="statusDot" class="dot"></span><span id="statusLbl">Loading…</span></span>
+      <span class="clock" id="clock">--:--:--</span>
+    </div>
+    <button class="btn-primary" id="btnLocate">📍 Locate me</button>
+    <label class="fld" for="stationSel">Or choose a station</label>
+    <select id="stationSel"></select>
+    <div id="locInfo" class="small muted" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card hero">
+    <div class="row between" style="align-items:flex-start;">
+      <div style="min-width:0;">
+        <div class="label" id="heroLabel">Next pass-through</div>
+        <div class="countdown" id="heroCountdown">--:--</div>
+        <div class="eta" id="heroEta">Choose a station to begin</div>
+        <div class="badges" id="heroBadges"></div>
+        <div class="passline" id="heroPass"></div>
+      </div>
+      <div class="compass-box">
+        <div class="compass" id="compass">
+          <span class="tick n">N</span><span class="tick s">S</span>
+          <span class="tick e">E</span><span class="tick w">W</span>
+          <div class="arrow" id="arrow"></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="kv"><span class="k">Enters from</span><span class="v" id="kvFrom">—</span></div>
+      <div class="kv"><span class="k">Exits toward</span><span class="v" id="kvDir">—</span></div>
+      <div class="kv"><span class="k">Aim at</span><span class="v" id="kvTrack">—</span></div>
+      <div class="kv"><span class="k">Est. speed</span><span class="v" id="kvSpeed">—</span></div>
+    </div>
+    <button class="btn-ghost" id="btnCompass" style="margin-top:16px;">🧭 Calibrate to device compass</button>
+  </div>
+
+  <div class="card" style="padding:14px;">
+    <div class="banner clear" id="blockBanner">
+      <span class="ico">✅</span>
+      <div><div class="t" id="blockTitle">Track is clear</div><div class="d" id="blockDesc"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title row between"><span>Upcoming pass-throughs</span><span class="small muted" id="upStation"></span></div>
+    <ul class="list" id="upList"><li class="muted small">—</li></ul>
+  </div>
+
+  <div class="note">⚠️ Stay behind the yellow line — trains pass at very high speed.</div>
+</div>
+
+<!-- ===== engine (inlined so this file is standalone & editable) ===== -->
+<script>
+/* =========================================================================
+   engine.js — מנוע הלו"ז המשותף של "צייד שינקנסן".
+   עובד גם בדפדפן (window.Spotter) וגם ב-Node (module.exports).
+
+   זהו "מקור האמת" היחיד: נתוני התחנות, דפוסי העצירה, חישוב אירועי מעבר,
+   זיהוי כיוון/מצפן וזיהוי חסימה. גם הסימולציה וגם מסלול ה-Bright Data
+   החי מחזירים אירועים באותו פורמט: { type, dir, timeMin, stops }.
+   ========================================================================= */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module !== "undefined" && module.exports) module.exports = api; // Node
+  root.Spotter = api;                                                        // Browser
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
+
+  /* Tokaido Shinkansen — index 0 = Tokyo (east) to Shin-Osaka (west). */
+  const STATIONS = [
+    { id:"tokyo",       name:"Tokyo",        jp:"東京",     lat:35.6812, lon:139.7671 },
+    { id:"shinagawa",   name:"Shinagawa",    jp:"品川",     lat:35.6285, lon:139.7387 },
+    { id:"shinyokohama",name:"Shin-Yokohama",jp:"新横浜",   lat:35.5079, lon:139.6173 },
+    { id:"odawara",     name:"Odawara",      jp:"小田原",   lat:35.2563, lon:139.1556 },
+    { id:"atami",       name:"Atami",        jp:"熱海",     lat:35.1031, lon:139.0781 },
+    { id:"mishima",     name:"Mishima",      jp:"三島",     lat:35.1267, lon:138.9111 },
+    { id:"shinfuji",    name:"Shin-Fuji",    jp:"新富士",   lat:35.1417, lon:138.6633 },
+    { id:"shizuoka",    name:"Shizuoka",     jp:"静岡",     lat:34.9719, lon:138.3886 },
+    { id:"kakegawa",    name:"Kakegawa",     jp:"掛川",     lat:34.7692, lon:137.9986 },
+    { id:"hamamatsu",   name:"Hamamatsu",    jp:"浜松",     lat:34.7036, lon:137.7347 },
+    { id:"toyohashi",   name:"Toyohashi",    jp:"豊橋",     lat:34.7628, lon:137.3819 },
+    { id:"mikawaanjo",  name:"Mikawa-Anjo",  jp:"三河安城", lat:34.9367, lon:137.0594 },
+    { id:"nagoya",      name:"Nagoya",       jp:"名古屋",   lat:35.1706, lon:136.8816 },
+    { id:"gifuhashima", name:"Gifu-Hashima", jp:"岐阜羽島", lat:35.3156, lon:136.6861 },
+    { id:"maibara",     name:"Maibara",      jp:"米原",     lat:35.3147, lon:136.2894 },
+    { id:"kyoto",       name:"Kyoto",        jp:"京都",     lat:34.9858, lon:135.7589 },
+    { id:"shinosaka",   name:"Shin-Osaka",   jp:"新大阪",   lat:34.7333, lon:135.5003 },
+  ];
+  const N = STATIONS.length;
+
+  /* דפוסי עצירה אמיתיים (index בקו) לכל סוג רכבת */
+  const STOPS = {
+    nozomi: new Set([0,1,2,12,15,16]),
+    hikari: new Set([0,1,2,3,7,12,14,15,16]),
+    kodama: new Set(Array.from({length:N}, (_,i)=>i)),
+  };
+  const TRAIN_META = {
+    nozomi:{ label:"のぞみ Nozomi", cls:"nozomi", cruise:285, dwell:1.5 },
+    hikari:{ label:"ひかり Hikari", cls:"hikari", cruise:255, dwell:2.0 },
+    kodama:{ label:"こだま Kodama", cls:"kodama", cruise:220, dwell:1.0 },
+  };
+  const SCHEDULE = [
+    { type:"nozomi", headway:10, downOffset:0,  upOffset:5  },
+    { type:"hikari", headway:30, downOffset:8,  upOffset:23 },
+    { type:"kodama", headway:20, downOffset:3,  upOffset:13 },
+  ];
+  const SERVICE_START = 6*60, SERVICE_END = 23*60;
+
+  /* ---------- גאומטריה ---------- */
+  const R = 6371, toRad = d=>d*Math.PI/180, toDeg = r=>r*180/Math.PI;
+  function haversine(a,b){
+    const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
+    const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
+    return 2*R*Math.asin(Math.sqrt(s));
+  }
+  function bearing(a,b){
+    const y=Math.sin(toRad(b.lon-a.lon))*Math.cos(toRad(b.lat));
+    const x=Math.cos(toRad(a.lat))*Math.sin(toRad(b.lat))
+          - Math.sin(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.cos(toRad(b.lon-a.lon));
+    return (toDeg(Math.atan2(y,x))+360)%360;
+  }
+  const COMPASS_EN = ["N","NE","E","SE","S","SW","W","NW"];
+  const compass = deg => COMPASS_EN[Math.round(deg/45)%8];
+
+  const CUM = (()=>{ const c=[0]; for(let i=1;i<N;i++) c[i]=c[i-1]+haversine(STATIONS[i-1],STATIONS[i]); return c; })();
+
+  /* ---------- סימולציה דטרמיניסטית (fallback / מצב offline) ---------- */
+  function eventTime(type, dir, baseMin, idx){
+    const m=TRAIN_META[type], stops=STOPS[type];
+    let distKm, lo, hi;
+    if(dir==="down"){ distKm=CUM[idx]-CUM[0]; lo=1; hi=idx; }
+    else            { distKm=CUM[N-1]-CUM[idx]; lo=idx+1; hi=N-2; }
+    let travel = distKm/m.cruise*60;
+    for(let i=lo;i<=hi;i++) if(stops.has(i)) travel += m.dwell;
+    return baseMin + travel;
+  }
+  function buildSimEvents(idx){
+    const out=[];
+    for(const s of SCHEDULE){
+      for(const dir of ["down","up"]){
+        const off = dir==="down" ? s.downOffset : s.upOffset;
+        for(let base=SERVICE_START+off; base<=SERVICE_END; base+=s.headway){
+          const t=eventTime(s.type,dir,base,idx);
+          if(t<SERVICE_START || t>SERVICE_END+30) continue;
+          out.push({ type:s.type, dir, timeMin:t, stops:STOPS[s.type].has(idx) });
+        }
+      }
+    }
+    out.sort((a,b)=>a.timeMin-b.timeMin);
+    return out;
+  }
+
+  /* ---------- אינטרפולציית זמן-מעבר מנתוני scraping אמיתיים ----------
+     בהינתן לו"ז אמיתי של רכבת אחת (זמנים בתחנות שבהן היא כן עוצרת),
+     מחשבים מתי היא חולפת בתחנה idx (שבה היא לא עוצרת) לפי מרחק יחסי
+     בין שתי תחנות העצירה שעוטפות אותה.
+     schedule = [{ idx, timeMin }] ממויין; dir = "down" | "up".          */
+  function interpolatePass(schedule, idx, dir){
+    const pts = schedule.slice().sort((a,b)=> dir==="down" ? a.idx-b.idx : b.idx-a.idx);
+    for(let k=0;k<pts.length-1;k++){
+      const a=pts[k], b=pts[k+1];
+      const lo=Math.min(a.idx,b.idx), hi=Math.max(a.idx,b.idx);
+      if(idx>lo && idx<hi){
+        const frac=(CUM[idx]-CUM[lo])/(CUM[hi]-CUM[lo]);
+        const tLo = a.idx===lo ? a.timeMin : b.timeMin;
+        const tHi = a.idx===hi ? a.timeMin : b.timeMin;
+        return tLo + frac*(tHi-tLo);
+      }
+    }
+    return null; // התחנה מחוץ לטווח הלו"ז שנסרק
+  }
+
+  /* ---------- כיוון/מצפן + זיהוי חסימה (משותף לכל המקורות) ---------- */
+  function approachBearing(idx, dir){
+    if(dir==="down"){ const p=Math.max(0,idx-1); return bearing(STATIONS[idx],STATIONS[p]); }
+    const p=Math.min(N-1,idx+1); return bearing(STATIONS[idx],STATIONS[p]);
+  }
+  function blockingTrain(events, t, dir){
+    for(const e of events){
+      if(!e.stops || e.dir!==dir) continue;
+      const dwell = e.type==="kodama" ? 6 : (TRAIN_META[e.type]?.dwell ?? 1.5);
+      if(t>=e.timeMin-0.3 && t<=e.timeMin+dwell+0.3) return { type:e.type, until:e.timeMin+dwell };
+    }
+    return null;
+  }
+  function nearestStation(lat,lon){
+    let best=0,bd=Infinity;
+    for(let i=0;i<N;i++){ const d=haversine({lat,lon},STATIONS[i]); if(d<bd){bd=d;best=i;} }
+    return { idx:best, dist:bd };
+  }
+
+  return {
+    STATIONS, STOPS, TRAIN_META, SCHEDULE, N, CUM,
+    SERVICE_START, SERVICE_END,
+    haversine, bearing, compass, approachBearing,
+    buildSimEvents, interpolatePass, blockingTrain, nearestStation,
+    indexOfId: id => STATIONS.findIndex(s=>s.id===id),
+  };
+});
+
+</script>
+<script>
+"use strict";
+const S = window.Spotter;
+const $ = id => document.getElementById(id);
+
+let stationIdx = S.indexOfId("odawara");
+let events = [];
+let deviceHeading = null;
+
+// Timetables are Japan time, so compute "now" in Asia/Tokyo regardless of the device clock.
+function jstParts(){
+  const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Tokyo",hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date());
+  const g = t => +p.find(x=>x.type===t).value;
+  return { h:g("hour")%24, m:g("minute"), s:g("second") };
+}
+function nowMinutes(){ const {h,m,s}=jstParts(); return h*60 + m + s/60; }
+function fmtClock(min){ const h=Math.floor(min/60)%24, m=Math.floor(min%60); return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
+function fmtCountdown(mins){ if(mins<0)mins=0; const t=Math.round(mins*60); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
+function terminalName(dir){ return dir==="down" ? S.STATIONS[S.N-1].name : S.STATIONS[0].name; }
+function fromIdxOf(idx, dir){ return dir==="down" ? Math.max(0, idx-1) : Math.min(S.N-1, idx+1); }
+function toIdxOf(idx, dir){ return dir==="down" ? Math.min(S.N-1, idx+1) : Math.max(0, idx-1); }
+
+async function loadEvents(){
+  let live = false;
+  try{
+    const r = await fetch("/api/next-trains?station="+S.STATIONS[stationIdx].id);
+    const j = await r.json();
+    if(j.events && j.events.length){ events = j.events; live = j.source === "brightdata"; }
+    else { events = S.buildSimEvents(stationIdx); }
+  }catch(e){
+    events = S.buildSimEvents(stationIdx);
+  }
+  setStatus(live);
+  render();
+}
+function setStatus(live){
+  $("statusDot").className = "dot" + (live ? " on" : "");
+  $("statusLbl").textContent = live ? "Live" : "Demo";
+}
+
+function selectStation(idx){
+  stationIdx=idx; $("stationSel").value=S.STATIONS[idx].id;
+  $("upStation").textContent = S.STATIONS[idx].name+" "+S.STATIONS[idx].jp;
+  loadEvents();
+}
+
+function render(){
+  { const {h,m,s}=jstParts(); $("clock").textContent = [h,m,s].map(n=>String(n).padStart(2,"0")).join(":")+" JST"; }
+  const t = nowMinutes();
+  const passes = events.filter(e => !e.stops && e.timeMin>t && (e.type==="nozomi"||e.type==="hikari"));
+  const next = passes[0];
+  const isMajorStop = S.STOPS.nozomi.has(stationIdx);
+
+  if(!next){
+    $("heroLabel").textContent = isMajorStop ? "Major stop" : "No pass-throughs";
+    $("heroCountdown").textContent="--:--";
+    $("heroEta").textContent = isMajorStop
+      ? "Fast trains stop here. Try an intermediate station to catch pass-throughs."
+      : "No upcoming pass-throughs right now.";
+    $("heroBadges").innerHTML=""; $("heroPass").textContent=""; setArrow(0);
+    ["kvFrom","kvDir","kvTrack","kvSpeed"].forEach(k=>$(k).textContent="—");
+    setBanner(null); renderList(passes); return;
+  }
+
+  const m=S.TRAIN_META[next.type], dt=next.timeMin-t;
+  const dest = next.dest || terminalName(next.dir);
+  $("heroLabel").textContent = "Next pass-through";
+  $("heroCountdown").textContent = fmtCountdown(dt);
+  $("heroEta").textContent = "Passes at "+fmtClock(next.timeMin)+" · "+m.label;
+  $("heroBadges").innerHTML =
+    `<span class="badge ${m.cls}">${m.label}</span>`+
+    `<span class="badge dir">${next.dir==="down"?"▶":"◀"} to ${dest}</span>`;
+
+  const approach = S.approachBearing(stationIdx, next.dir);
+  const toIdx = toIdxOf(stationIdx, next.dir), fromIdx = fromIdxOf(stationIdx, next.dir);
+  const exit = S.bearing(S.STATIONS[stationIdx], S.STATIONS[toIdx]);
+  const fromName = S.STATIONS[fromIdx].name, toName = S.STATIONS[toIdx].name;
+
+  $("heroPass").innerHTML =
+    `Passes <span class="a">${fromName} side (${S.compass(approach)})</span> ▶ <span class="b">${toName} side (${S.compass(exit)})</span>`;
+  $("kvFrom").textContent = fromName+" · "+S.compass(approach)+" "+Math.round(approach)+"°";
+  $("kvDir").textContent  = toName+" · "+S.compass(exit)+" "+Math.round(exit)+"°";
+  $("kvTrack").textContent = next.dir==="down" ? "Westbound track (→ "+terminalName("down")+")" : "Eastbound track (→ "+terminalName("up")+")";
+  $("kvSpeed").textContent = "~"+m.cruise+" km/h";
+  setArrow(approach);
+
+  setBanner(S.blockingTrain(events, next.timeMin, next.dir));
+  renderList(passes);
+}
+
+function setArrow(b){ $("arrow").style.transform = "translate(-50%,-50%) rotate("+b+"deg)"; applyDial(); }
+function applyDial(){ $("compass").style.transform = deviceHeading==null ? "rotate(0deg)" : "rotate("+(-deviceHeading)+"deg)"; }
+
+function setBanner(blk){
+  const b=$("blockBanner");
+  if(!blk){
+    b.className="banner clear"; b.querySelector(".ico").textContent="✅";
+    $("blockTitle").textContent="Track clear";
+    $("blockDesc").textContent="No standing train should block your shot.";
+  } else {
+    const m=S.TRAIN_META[blk.type], plat=(blk.platform!=null)?" at platform "+blk.platform:"";
+    b.className="banner blocked"; b.querySelector(".ico").textContent="⛔";
+    $("blockTitle").textContent="A "+m.label.split(" ").pop()+" is stopping"+plat;
+    $("blockDesc").textContent="It may block the view until ~"+fmtClock(blk.until)+". Move to the other side of the platform.";
+  }
+}
+
+function renderList(passes){
+  const t=nowMinutes(), ul=$("upList"), items=passes.slice(0,7);
+  if(!items.length){ ul.innerHTML='<li class="muted small">Nothing upcoming right now</li>'; return; }
+  ul.innerHTML = items.map(e=>{
+    const m=S.TRAIN_META[e.type], blk=S.blockingTrain(events, e.timeMin, e.dir), dest=e.dest||terminalName(e.dir);
+    return `<li><span class="li-left"><span class="li-time">${fmtClock(e.timeMin)}</span>`+
+      `<span class="badge ${m.cls}">${m.label.split(" ").pop()}</span>`+
+      `<span class="small muted">${e.dir==="down"?"▶":"◀"} ${dest}</span></span>`+
+      `<span class="small">${blk?'<span style="color:var(--bad)">⛔ blocked</span>':'<span style="color:var(--ok)">✅ clear</span>'} · ${Math.round(e.timeMin-t)}m</span></li>`;
+  }).join("");
+}
+
+/* live device compass */
+function onOrient(e){
+  let h=null;
+  if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading;
+  else if(e.absolute && typeof e.alpha==="number") h=(360-e.alpha)%360;
+  if(h!=null && isFinite(h)){ deviceHeading=h; applyDial(); }
+}
+async function enableCompass(){
+  try{
+    if(typeof DeviceOrientationEvent!=="undefined" && typeof DeviceOrientationEvent.requestPermission==="function"){
+      if(await DeviceOrientationEvent.requestPermission()!=="granted"){ return; }
+    }
+    window.addEventListener("deviceorientationabsolute", onOrient, true);
+    window.addEventListener("deviceorientation", onOrient, true);
+    $("btnCompass").textContent="🧭 Compass on — turn to face the arrow";
+    $("btnCompass").classList.add("on");
+  }catch(err){ $("btnCompass").textContent="🧭 Compass unavailable"; }
+}
+$("btnCompass").addEventListener("click", enableCompass);
+
+/* GPS */
+$("btnLocate").addEventListener("click", ()=>{
+  if(!navigator.geolocation){ $("locInfo").textContent="Geolocation isn't supported here."; return; }
+  $("btnLocate").innerHTML='<span class="spin">◌</span> Locating…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude:lat, longitude:lon}=pos.coords;
+    const {idx,dist}=S.nearestStation(lat,lon);
+    selectStation(idx);
+    const inJapan = lat>24 && lat<46 && lon>122 && lon<154;
+    $("btnLocate").textContent="📍 Locate me";
+    $("locInfo").innerHTML = (inJapan?"":"You're not in Japan — showing a demo. ")+
+      "Nearest: <b>"+S.STATIONS[idx].name+"</b> ("+S.STATIONS[idx].jp+") · "+dist.toFixed(1)+" km away.";
+  }, err=>{
+    $("btnLocate").textContent="📍 Locate me";
+    $("locInfo").textContent="Couldn't locate you. Choose a station manually.";
+  }, { enableHighAccuracy:true, timeout:10000, maximumAge:30000 });
+});
+
+/* init */
+(function init(){
+  $("stationSel").innerHTML = S.STATIONS.map((st,i)=>{
+    const tag = S.STOPS.nozomi.has(i) ? " — major stop" : (S.STOPS.hikari.has(i) ? "" : " · great for photos");
+    return `<option value="${st.id}">${st.name} ${st.jp}${tag}</option>`;
+  }).join("");
+  $("stationSel").addEventListener("change", e=> selectStation(S.indexOfId(e.target.value)));
+  selectStation(stationIdx);
+  setInterval(render, 1000);
+})();
+</script>
+</body>
+</html>
