@@ -203,17 +203,17 @@
   </div>
 
   <div class="sign" aria-label="Station sign">
-    <div class="sign-top"><div class="sign-kanji" id="signKanji">小田原</div></div>
+    <div class="sign-top"><div class="sign-kanji" id="signKanji">—</div></div>
     <div class="sign-neighbors"><span id="signLeft"></span><span id="signRight"></span></div>
-    <div class="sign-band" id="signRomaji">Odawara</div>
+    <div class="sign-band" id="signRomaji">Locating…</div>
   </div>
 
   <div class="board hero">
     <div class="row between" style="align-items:flex-start;">
       <div style="min-width:0;">
-        <div class="board-label" id="heroLabel">Next pass-through</div>
-        <div class="countdown" id="heroCountdown">--:--</div>
-        <div class="eta" id="heroEta">Choose a station to begin</div>
+        <div class="board-label" id="heroLabel">Finding your station</div>
+        <div class="countdown" id="heroCountdown">··:··</div>
+        <div class="eta" id="heroEta">Detecting your location…</div>
         <div class="badges" id="heroBadges"></div>
         <div class="passline" id="heroPass"></div>
       </div>
@@ -257,7 +257,8 @@
 const S = window.Spotter;
 const $ = id => document.getElementById(id);
 
-let stationIdx = S.indexOfId("odawara");
+let stationIdx = null;                 // chosen from GPS on load; null = still locating
+const FALLBACK_ID = "odawara";         // used only if geolocation is denied/unavailable
 let events = [];
 let deviceHeading = null;
 
@@ -280,6 +281,7 @@ function toIdxOf(idx, dir){ return dir==="down" ? Math.min(S.N-1, idx+1) : Math.
 
 let loadSeq = 0;
 async function loadEvents(){
+  if(stationIdx==null) return;
   const seq = ++loadSeq;       // drop out-of-order responses when switching stations fast
   let live = false, got = null;
   try{
@@ -337,6 +339,7 @@ function applyGeometry(ev){
 
 function render(){
   { const {h,m,s}=jstParts(); $("clock").textContent = [h,m,s].map(n=>String(n).padStart(2,"0")).join(":")+" JST"; }
+  if(stationIdx==null) return;   // still locating — keep the placeholder
   const t = nowMinutes();
   const future = events.filter(e => e.timeMin>t);
   const passes = future.filter(e => !e.stops && (e.type==="nozomi"||e.type==="hikari"));
@@ -455,23 +458,36 @@ async function enableCompass(){
 }
 $("btnCompass").addEventListener("click", enableCompass);
 
-/* GPS */
-$("btnLocate").addEventListener("click", ()=>{
-  if(!navigator.geolocation){ $("locInfo").textContent="Geolocation isn't supported here."; return; }
+/* GPS — pick the nearest station to the user. Runs automatically on load
+   (so visitors see their own location), and again on demand from the button.
+   Falls back to a default station only if location is denied/unavailable. */
+function fallbackIfUnset(){ if(stationIdx==null) selectStation(S.indexOfId(FALLBACK_ID)); }
+
+function locate(auto){
+  if(!navigator.geolocation){
+    fallbackIfUnset();
+    $("locInfo").textContent="Location isn't available here — choose a station above.";
+    return;
+  }
   $("btnLocate").innerHTML='<span class="spin">◌</span> Locating…';
+  if(stationIdx==null) $("locInfo").textContent="Detecting your location…";
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:lat, longitude:lon}=pos.coords;
     const {idx,dist}=S.nearestStation(lat,lon);
     selectStation(idx);
     const inJapan = lat>24 && lat<46 && lon>122 && lon<154;
     $("btnLocate").textContent="Find my nearest station";
-    $("locInfo").innerHTML = (inJapan?"":"You're not in Japan — showing a demo. ")+
+    $("locInfo").innerHTML = (inJapan?"":"You're not on the Tokaido line — showing the nearest stop as a demo. ")+
       "Nearest: <b>"+S.STATIONS[idx].name+"</b> ("+S.STATIONS[idx].jp+") · "+dist.toFixed(1)+" km away.";
   }, err=>{
     $("btnLocate").textContent="Find my nearest station";
-    $("locInfo").textContent="Couldn't locate you. Choose a station manually.";
-  }, { enableHighAccuracy:true, timeout:10000, maximumAge:30000 });
-});
+    fallbackIfUnset();
+    $("locInfo").textContent = auto
+      ? "Couldn't get your location, so showing "+S.STATIONS[stationIdx].name+". Tap “Find my nearest station” or choose above."
+      : "Couldn't locate you. Choose a station manually.";
+  }, { enableHighAccuracy:true, timeout:10000, maximumAge:60000 });
+}
+$("btnLocate").addEventListener("click", ()=>locate(false));
 
 /* init */
 (function init(){
@@ -480,9 +496,11 @@ $("btnLocate").addEventListener("click", ()=>{
     return `<option value="${st.id}">${st.name} ${st.jp}${tag}</option>`;
   }).join("");
   $("stationSel").addEventListener("change", e=> selectStation(S.indexOfId(e.target.value)));
-  selectStation(stationIdx);
   setInterval(render, 1000);
   setInterval(loadEvents, 300000);   // refresh timetable data every 5 minutes
+  locate(true);                      // auto-detect location on load
+  // safety net: if the location prompt is ignored entirely, show a station anyway
+  setTimeout(fallbackIfUnset, 12000);
 })();
 </script>
 </body>
