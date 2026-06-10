@@ -2,113 +2,216 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="theme-color" content="#0a0e17" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e9ebed" />
 <title>Shinkansen Spotter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
+  /* =====================================================================
+     Palette: six colour families, each with one light-context value and
+     one board (dark) variant. Every colour below maps to one of these —
+     no one-off hexes.
+       ink / concrete+sign / tokaido blue / signal green / signal red /
+       signal amber
+     Train types use their real JR Central board colours, drawn from the
+     same families: Nozomi = amber, Hikari = red, Kodama = blue.
+     ===================================================================== */
   :root{
-    --bg:#0a0e17; --card:#121826; --card-soft:#161d2e; --line:rgba(255,255,255,.07);
-    --txt:#eef2fb; --muted:#8b97b4; --faint:#647092;
-    --accent:#5ec8ff; --accent2:#8b7bff;
-    --ok:#33d6a6; --warn:#ffc14d; --bad:#ff647c;
-    --radius:18px;
+    /* base families */
+    --ink:#1a1e23;        --ink-soft:#5b636d;     --hairline:#c9ced4;
+    --concrete:#e9ebed;   --sign:#fcfdfe;
+    --tokaido:#1a4f9f;    --tokaido-press:#143e7e; --tokaido-board:#7fb4ff;
+    --green:#178f5f;      --green-board:#7df0a6;
+    --red:#cf3a2c;        --red-board:#ff7a6b;
+    --amber:#f3c216;      --amber-deep:#caa106;    --amber-board:#ffd23e;
+
+    /* board surfaces */
+    --board:#0f1411; --board-raise:#141a16; --board-edge:#262c27; --board-txt:#dee7e0; --board-dim:#7f8f85;
+    --board-line:rgba(255,255,255,.09);
+
+    /* semantic */
+    --ok:var(--green); --bad:var(--red);
+    --nozomi:var(--amber-board); --hikari:var(--red-board); --kodama:var(--tokaido-board);
+    --led:var(--green-board);
+
+    /* rhythm */
+    --r-m:12px;   /* cards, panels, boards */
+    --r-s:8px;    /* buttons, inputs, chips */
+    --gap:12px;   /* space between sections */
+    --pad:16px;   /* inner card padding */
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0;}
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple Color Emoji",sans-serif;
-    background:var(--bg); color:var(--txt); min-height:100vh; line-height:1.5;
-    padding:18px 16px 48px; -webkit-font-smoothing:antialiased;
+    font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 118px, rgba(26,30,35,.05) 118px 120px),
+      var(--concrete);
+    color:var(--ink); min-height:100vh; line-height:1.5;
+    padding:16px 14px 40px; -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:560px; margin:0 auto;}
-  header{margin:4px 2px 18px;}
-  header h1{font-size:21px; font-weight:680; letter-spacing:-.01em; margin:0; display:flex; align-items:baseline; gap:9px;}
-  header h1 .jp{font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.14em;}
-  header p{margin:6px 0 0; color:var(--muted); font-size:13.5px;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:14px;}
+  :focus-visible{outline:3px solid var(--tokaido); outline-offset:2px; border-radius:4px;}
+  .board :focus-visible{outline-color:var(--amber-board);}
+
+  /* ---- masthead ---- */
+  .mast{display:flex; justify-content:space-between; align-items:flex-end; margin:2px 2px 14px; gap:10px;}
+  .mast .line{display:flex; align-items:center; gap:9px; min-width:0;}
+  .line-chip{width:14px; height:26px; background:var(--tokaido); border-radius:3px; flex:0 0 auto;}
+  .mast h1{font-size:17px; font-weight:900; letter-spacing:.02em; margin:0; line-height:1.15;}
+  .mast .sub{font-size:11px; color:var(--ink-soft); font-weight:700; letter-spacing:.14em; text-transform:uppercase;}
+  .mast-right{text-align:right; flex:0 0 auto;}
+  .clock{font-size:13px; color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums; display:block;}
+  .status{display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:900; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft);}
+  .status .live{color:var(--ok);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--hairline); transition:background .3s;}
+  .dot.on{background:var(--ok); box-shadow:0 0 0 3px rgba(23,143,95,.18);}
+
+  /* ---- light panels ---- */
+  .panel{background:var(--sign); border:1px solid var(--hairline); border-radius:var(--r-m); padding:var(--pad); margin-bottom:var(--gap); box-shadow:0 1px 0 rgba(26,30,35,.06);}
   .row{display:flex; gap:10px; align-items:center;}
   .between{justify-content:space-between;}
-  .muted{color:var(--muted);} .small{font-size:12.5px;}
-  .status{display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted);}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--faint); transition:background .3s;}
-  .dot.on{background:var(--ok); box-shadow:0 0 0 3px rgba(51,214,166,.16);}
-  .clock{font-size:12.5px; color:var(--faint); font-variant-numeric:tabular-nums;}
-  button{font-family:inherit; font-size:14.5px; cursor:pointer; border:none; border-radius:13px; padding:12px 14px; font-weight:600; width:100%; transition:transform .06s, background .2s, border-color .2s; display:flex; align-items:center; justify-content:center; gap:8px;}
-  button svg{flex:0 0 auto;}
+  .muted{color:var(--ink-soft);} .small{font-size:12.5px;}
+
+  button{font-family:inherit; font-size:14.5px; cursor:pointer; border:none; border-radius:var(--r-s); padding:13px 14px; font-weight:700; width:100%; min-height:46px; transition:transform .06s, background .2s, border-color .2s, color .2s;}
   button:active{transform:scale(.985);}
-  .btn-primary{background:var(--accent); color:#04121c; font-weight:700;}
-  .btn-ghost{background:transparent; color:var(--txt); border:1px solid var(--line);}
-  .btn-ghost.on{background:rgba(94,200,255,.12); border-color:rgba(94,200,255,.4); color:var(--accent);}
-  label.fld{display:block; font-size:12px; color:var(--muted); margin:14px 0 7px;}
-  select{font-family:inherit; font-size:14.5px; background:var(--card-soft); color:var(--txt); border:1px solid var(--line);
-    border-radius:13px; padding:12px 13px; width:100%; appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%238b97b4' stroke-width='1.6'><path d='M4 6l4 4 4-4'/></svg>");
+  .btn-primary{background:var(--tokaido); color:#fff; letter-spacing:.02em;}
+  .btn-primary:active{background:var(--tokaido-press);}
+  label.fld{display:block; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin:14px 0 6px;}
+  select{font-family:inherit; font-size:14.5px; background:var(--concrete); color:var(--ink); border:1px solid var(--hairline);
+    border-radius:var(--r-s); padding:12px 13px; width:100%; min-height:46px; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%235b636d' stroke-width='1.8'><path d='M4 6l4 4 4-4'/></svg>");
     background-repeat:no-repeat; background-position:right 13px center; padding-right:38px;}
-  .hero .label{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
-  .countdown{font-size:60px; font-weight:760; line-height:1; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
-  .eta{color:var(--muted); font-size:13px;}
-  .badges{margin-top:12px; display:flex; gap:6px; flex-wrap:wrap;}
-  .badge{font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:8px;}
-  .badge.nozomi{background:rgba(180,120,255,.16); color:#d8bcff;}
-  .badge.hikari{background:rgba(94,200,255,.16); color:#aee4ff;}
-  .badge.kodama{background:rgba(120,200,160,.16); color:#b6f0cf;}
-  .badge.dir{background:rgba(255,255,255,.07); color:var(--txt);}
-  .compass-box{width:116px; height:116px; flex:0 0 auto;}
-  .compass{width:116px; height:116px; border-radius:50%; position:relative; border:1.5px solid var(--line);
-    background:radial-gradient(circle at 50% 38%, rgba(94,200,255,.06), transparent 60%), var(--card-soft);
-    transition:transform .25s linear;}
-  .compass .tick{position:absolute; color:var(--faint); font-size:10px; font-weight:700;}
-  .compass .n{top:6px; left:50%; transform:translateX(-50%); color:var(--bad);}
+  @media (hover:hover){
+    .btn-primary:hover{background:var(--tokaido-press);}
+    .btn-ghost:hover{border-color:var(--board-dim);}
+    select:hover{border-color:var(--ink-soft);}
+  }
+
+  /* ---- ekimeihyo: the station name sign ---- */
+  .sign{background:var(--sign); border:2px solid var(--ink); border-radius:var(--r-m); overflow:hidden; margin-bottom:var(--gap); box-shadow:0 2px 0 rgba(26,30,35,.14);}
+  .sign-top{padding:16px 14px 4px; text-align:center;}
+  .sign-kanji{font-size:46px; font-weight:900; letter-spacing:.1em; line-height:1.1;}
+  .sign-neighbors{display:flex; justify-content:space-between; gap:10px; padding:6px 12px 10px; font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+  .sign-neighbors span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sign-band{background:var(--tokaido); color:#fff; text-align:center; padding:7px 10px; font-weight:700; letter-spacing:.28em; text-transform:uppercase; font-size:13.5px;}
+
+  /* ---- departure board ---- */
+  .board{background:var(--board); border:2px solid var(--board-edge); border-radius:var(--r-m); padding:var(--pad); margin-bottom:var(--gap); color:var(--board-txt); position:relative; overflow:hidden;}
+  .board::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px);}
+  .board > *{position:relative; z-index:1;}
+  .board-label{font-size:10.5px; font-weight:900; letter-spacing:.22em; text-transform:uppercase; color:var(--board-dim);}
+  .countdown{font-family:"DotGothic16",monospace; font-size:58px; line-height:1.05; margin:6px 0 2px; color:var(--led); text-shadow:0 0 14px rgba(125,240,166,.35); font-variant-numeric:tabular-nums; transition:color .4s;}
+  .countdown.soon{color:var(--amber-board); text-shadow:0 0 14px rgba(255,210,62,.35);}
+  .countdown.now{color:var(--red-board); text-shadow:0 0 14px rgba(255,122,107,.4);}
+  .eta{color:var(--board-dim); font-size:13px;}
+  .badges{margin-top:10px; display:flex; gap:12px; flex-wrap:wrap; font-size:13px; font-weight:700; letter-spacing:.04em;}
+  .badge{display:inline-block;}
+  .badge.nozomi{color:var(--nozomi);}
+  .badge.hikari{color:var(--hikari);}
+  .badge.kodama{color:var(--kodama);}
+  .badge.dir{color:var(--board-txt);}
+  .passline{margin-top:12px; font-size:13px; font-weight:500; color:var(--board-txt);}
+  .passline .a{color:var(--amber-board);} .passline .b{color:var(--led);}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:13px 12px; margin-top:16px; padding-top:14px; border-top:1px solid var(--board-line);}
+  .kv .k{font-size:10px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:var(--board-dim); display:block; margin-bottom:2px;}
+  .kv .v{font-size:13.5px; font-weight:700; overflow-wrap:anywhere;}
+  .btn-ghost{background:transparent; color:var(--board-txt); border:1px solid var(--board-line); margin-top:16px;}
+  .btn-ghost.on{background:rgba(125,240,166,.1); border-color:var(--led); color:var(--led);}
+
+  /* compass dial */
+  .compass-box{width:108px; flex:0 0 auto; text-align:center;}
+  .compass{width:108px; height:108px; border-radius:50%; position:relative; border:1.5px solid var(--board-line);
+    background:radial-gradient(circle at 50% 40%, rgba(125,240,166,.07), transparent 62%), var(--board-raise);
+    transition:transform .25s linear; margin:0 auto;}
+  .compass .tick{position:absolute; color:var(--board-dim); font-size:10px; font-weight:900;}
+  .compass .n{top:6px; left:50%; transform:translateX(-50%); color:var(--red-board);}
   .compass .s{bottom:6px; left:50%; transform:translateX(-50%);}
   .compass .e{right:8px; top:50%; transform:translateY(-50%);}
   .compass .w{left:8px; top:50%; transform:translateY(-50%);}
+  .dial-cap{margin-top:6px; font-size:9.5px; font-weight:900; letter-spacing:.18em; text-transform:uppercase; color:var(--board-dim);}
   .arrow{position:absolute; left:50%; top:50%; width:0; height:0; transform-origin:center; transition:transform .6s cubic-bezier(.2,.8,.2,1);}
-  .arrow::before{content:""; position:absolute; left:-7px; top:-44px; border-left:7px solid transparent; border-right:7px solid transparent; border-bottom:19px solid var(--accent); filter:drop-shadow(0 0 6px rgba(94,200,255,.6));}
-  .arrow::after{content:""; position:absolute; left:-2px; top:-25px; width:4px; height:28px; background:var(--accent); border-radius:2px; opacity:.85;}
-  .passline{margin-top:14px; font-size:13.5px; font-weight:600; color:var(--txt);}
-  .passline .a{color:#aee4ff;} .passline .b{color:#b6f0cf;}
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px 12px; margin-top:16px;}
-  .kv .k{font-size:11px; color:var(--muted); display:block; margin-bottom:2px;}
-  .kv .v{font-size:14px; font-weight:600;}
-  .banner{border-radius:14px; padding:13px 15px; display:flex; gap:11px; align-items:flex-start;}
-  .banner.clear{background:rgba(51,214,166,.10); border:1px solid rgba(51,214,166,.28);}
-  .banner.blocked{background:rgba(255,100,124,.10); border:1px solid rgba(255,100,124,.32);}
-  .banner .ico{font-size:18px; line-height:1.2;}
-  .banner .t{font-weight:650; font-size:14px;}
-  .banner .d{font-size:12.5px; color:var(--muted); margin-top:2px; font-weight:400;}
-  .sec-title{font-size:13px; font-weight:680; margin:2px 2px 10px; color:var(--txt);}
+  .arrow::before{content:""; position:absolute; left:-7px; top:-41px; border-left:7px solid transparent; border-right:7px solid transparent; border-bottom:18px solid var(--led); filter:drop-shadow(0 0 6px rgba(125,240,166,.6));}
+  .arrow::after{content:""; position:absolute; left:-2px; top:-23px; width:4px; height:26px; background:var(--led); border-radius:2px; opacity:.85;}
+
+  /* ---- platform status (maru / batsu) ---- */
+  .banner{border-radius:var(--r-m); padding:12px 14px; display:flex; gap:12px; align-items:flex-start; border:1px solid var(--hairline); background:var(--sign); margin-bottom:var(--gap); box-shadow:0 1px 0 rgba(26,30,35,.06);}
+  .banner .ico{font-size:20px; line-height:1.2; font-weight:900; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .banner.clear .ico{color:var(--ok); border:2.5px solid var(--ok);}
+  .banner.blocked .ico{color:var(--sign); background:var(--bad);}
+  .banner.blocked{border-color:var(--bad); background:var(--sign);}
+  .banner .t{font-weight:700; font-size:14px;}
+  .banner .d{font-size:12.5px; color:var(--ink-soft); margin-top:2px; font-weight:400;}
+
+  /* ---- upcoming: board rows ---- */
+  .sec-title{font-size:10.5px; font-weight:900; letter-spacing:.22em; text-transform:uppercase; color:var(--board-dim); margin:0 0 8px;}
   ul.list{list-style:none; margin:0; padding:0;}
-  ul.list li{display:flex; justify-content:space-between; align-items:center; padding:11px 2px; border-bottom:1px solid var(--line);}
+  ul.list li{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 2px; border-bottom:1px solid var(--board-line); font-size:13px;}
   ul.list li:last-child{border-bottom:none;}
-  .li-left{display:flex; gap:10px; align-items:center;}
-  .li-time{font-variant-numeric:tabular-nums; font-weight:700; min-width:50px;}
-  .note{font-size:11.5px; color:var(--faint); text-align:center; margin-top:8px;}
+  .li-left{display:flex; gap:10px; align-items:center; min-width:0;}
+  .li-left .small{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .li-time{font-family:"DotGothic16",monospace; font-size:15px; color:var(--led); min-width:52px; font-variant-numeric:tabular-nums;}
+  .li-right{display:flex; gap:8px; align-items:baseline; flex:0 0 auto;}
+  .li-mins{font-family:"DotGothic16",monospace; font-size:14px; color:var(--board-txt); min-width:38px; text-align:right;}
+  .li-plat{font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--board-dim);}
+  .st-ok{color:var(--led); font-weight:900;}
+  .st-no{color:var(--red-board); font-weight:900;}
+  ul.list .muted{color:var(--board-dim);}
+
+  /* ---- tactile warning strip ---- */
+  .tactile{margin-top:var(--gap); background:var(--amber); border:1px solid var(--amber-deep); border-radius:var(--r-s); padding:9px 12px; display:flex; gap:12px; align-items:center; color:var(--ink); font-weight:700; font-size:12.5px;}
+  .tactile .dots{flex:0 0 36px; height:36px; border-radius:4px;
+    background:radial-gradient(circle, rgba(26,30,35,.32) 3.4px, transparent 3.9px); background-size:12px 12px; background-position:2px 2px;}
+
   .spin{display:inline-block; animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+  @media (max-width:380px){
+    .sign-kanji{font-size:38px;}
+    .countdown{font-size:48px;}
+    .compass-box{width:92px;}
+    .compass{width:92px; height:92px;}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>Shinkansen Spotter <span class="jp">新幹線</span></h1>
-    <p>See when the next bullet train passes your station without stopping — and where to point your camera.</p>
+  <header class="mast">
+    <div class="line">
+      <span class="line-chip" aria-hidden="true"></span>
+      <div>
+        <h1>Shinkansen Spotter</h1>
+        <span class="sub">Tokaido Line 東海道新幹線</span>
+      </div>
+    </div>
+    <div class="mast-right">
+      <span class="clock" id="clock">--:--:--</span>
+      <span class="status"><span id="statusDot" class="dot"></span><span id="statusLbl">Loading…</span></span>
+    </div>
   </header>
 
-  <div class="card">
-    <div class="row between" style="margin-bottom:14px;">
-      <span class="status"><span id="statusDot" class="dot"></span><span id="statusLbl">Loading…</span></span>
-      <span class="clock" id="clock">--:--:--</span>
-    </div>
-    <button class="btn-primary" id="btnLocate"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="btnLocateLbl">Locate me</span></button>
+  <div class="panel">
+    <button class="btn-primary" id="btnLocate">Find my nearest station</button>
     <label class="fld" for="stationSel">Or choose a station</label>
     <select id="stationSel"></select>
     <div id="locInfo" class="small muted" style="margin-top:10px;"></div>
   </div>
 
-  <div class="card hero">
+  <div class="sign" aria-label="Station sign">
+    <div class="sign-top"><div class="sign-kanji" id="signKanji">小田原</div></div>
+    <div class="sign-neighbors"><span id="signLeft"></span><span id="signRight"></span></div>
+    <div class="sign-band" id="signRomaji">Odawara</div>
+  </div>
+
+  <div class="board hero">
     <div class="row between" style="align-items:flex-start;">
       <div style="min-width:0;">
-        <div class="label" id="heroLabel">Next pass-through</div>
+        <div class="board-label" id="heroLabel">Next pass-through</div>
         <div class="countdown" id="heroCountdown">--:--</div>
         <div class="eta" id="heroEta">Choose a station to begin</div>
         <div class="badges" id="heroBadges"></div>
@@ -120,30 +223,32 @@
           <span class="tick e">E</span><span class="tick w">W</span>
           <div class="arrow" id="arrow"></div>
         </div>
+        <div class="dial-cap">Approach</div>
       </div>
     </div>
     <div class="grid2">
       <div class="kv"><span class="k">Enters from</span><span class="v" id="kvFrom">—</span></div>
       <div class="kv"><span class="k">Exits toward</span><span class="v" id="kvDir">—</span></div>
-      <div class="kv"><span class="k">Aim at</span><span class="v" id="kvTrack">—</span></div>
+      <div class="kv"><span class="k">Track</span><span class="v" id="kvTrack">—</span></div>
       <div class="kv"><span class="k">Est. speed</span><span class="v" id="kvSpeed">—</span></div>
     </div>
-    <button class="btn-ghost" id="btnCompass" style="margin-top:16px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.2 7.8 14.3 14.3 7.8 16.2 9.7 9.7 16.2 7.8"/></svg><span id="btnCompassLbl">Use device compass</span></button>
+    <button class="btn-ghost" id="btnCompass">Calibrate device compass</button>
   </div>
 
-  <div class="card" style="padding:14px;">
-    <div class="banner clear" id="blockBanner">
-      <span class="ico" id="blockIco"></span>
-      <div><div class="t" id="blockTitle">Track is clear</div><div class="d" id="blockDesc"></div></div>
-    </div>
+  <div class="banner clear" id="blockBanner" aria-live="polite">
+    <span class="ico" aria-hidden="true">○</span>
+    <div><div class="t" id="blockTitle">Track is clear</div><div class="d" id="blockDesc"></div></div>
   </div>
 
-  <div class="card">
-    <div class="sec-title row between"><span id="listTitle">Upcoming pass-throughs</span><span class="small muted" id="upStation"></span></div>
+  <div class="board">
+    <div class="sec-title row between"><span id="listTitle">Upcoming pass-throughs</span><span id="upStation"></span></div>
     <ul class="list" id="upList"><li class="muted small">—</li></ul>
   </div>
 
-  <div class="note">Stay behind the yellow line. Trains pass at very high speed.</div>
+  <div class="tactile" role="note">
+    <span class="dots" aria-hidden="true"></span>
+    <span>Stay behind the yellow tactile line — trains pass at very high speed.</span>
+  </div>
 </div>
 
 <script src="./engine.js"></script>
@@ -190,12 +295,32 @@ async function loadEvents(){
 function setStatus(live){
   $("statusDot").className = "dot" + (live ? " on" : "");
   $("statusLbl").textContent = live ? "Live" : "Demo";
+  $("statusLbl").className = live ? "live" : "";
+}
+
+/* the ekimeihyo sign: current station + line neighbours (left = Tokyo side) */
+function setSign(idx){
+  const st = S.STATIONS[idx];
+  $("signKanji").textContent = st.jp;
+  $("signRomaji").textContent = st.name;
+  const L = idx>0 ? S.STATIONS[idx-1] : null;
+  const R = idx<S.N-1 ? S.STATIONS[idx+1] : null;
+  $("signLeft").textContent  = L ? "◀ "+L.name : "";
+  $("signRight").textContent = R ? R.name+" ▶" : "";
 }
 
 function selectStation(idx){
   stationIdx=idx; $("stationSel").value=S.STATIONS[idx].id;
   $("upStation").textContent = S.STATIONS[idx].name+" "+S.STATIONS[idx].jp;
+  setSign(idx);
   loadEvents();
+}
+
+function setCountdown(mins){
+  const cd=$("heroCountdown");
+  cd.textContent = fmtCountdown(mins);
+  cd.classList.toggle("now", mins<1);
+  cd.classList.toggle("soon", mins>=1 && mins<3);
 }
 
 function applyGeometry(ev){
@@ -205,7 +330,7 @@ function applyGeometry(ev){
   const fromName = S.STATIONS[fromIdx].name, toName = S.STATIONS[toIdx].name;
   $("kvFrom").textContent = fromName+" · "+S.compass(approach)+" "+Math.round(approach)+"°";
   $("kvDir").textContent  = toName+" · "+S.compass(exit)+" "+Math.round(exit)+"°";
-  $("kvTrack").textContent = ev.dir==="down" ? "Westbound track (→ "+terminalName("down")+")" : "Eastbound track (→ "+terminalName("up")+")";
+  $("kvTrack").textContent = ev.dir==="down" ? "Westbound · to "+terminalName("down") : "Eastbound · to "+terminalName("up");
   setArrow(approach);
   return { approach, exit, fromName, toName };
 }
@@ -220,13 +345,13 @@ function render(){
 
   if(!next){
     // Nothing passes through here (major stop or end of service) — show
-    // real departures instead of an empty screen.
+    // real departures instead of an empty board.
     const deps = future.filter(e => e.stops);
     const d = deps[0];
     if(d){
       const m=S.TRAIN_META[d.type], dest=d.dest||terminalName(d.dir);
       $("heroLabel").textContent = "Next departure";
-      $("heroCountdown").textContent = fmtCountdown(d.timeMin-t);
+      setCountdown(d.timeMin-t);
       $("heroEta").textContent = "Departs at "+fmtClock(d.timeMin)+" · "+m.label+(d.platform!=null?" · Platform "+d.platform:"");
       $("heroBadges").innerHTML =
         `<span class="badge ${m.cls}">${m.label}</span>`+
@@ -241,6 +366,7 @@ function render(){
     }
     $("heroLabel").textContent = "Quiet right now";
     $("heroCountdown").textContent="--:--";
+    $("heroCountdown").classList.remove("soon","now");
     $("heroEta").textContent = "No more trains today. Service runs roughly 06:00–23:00 JST.";
     $("heroBadges").innerHTML=""; $("heroPass").textContent=""; setArrow(0);
     ["kvFrom","kvDir","kvTrack","kvSpeed"].forEach(k=>$(k).textContent="—");
@@ -253,7 +379,7 @@ function render(){
   const m=S.TRAIN_META[next.type], dt=next.timeMin-t;
   const dest = next.dest || terminalName(next.dir);
   $("heroLabel").textContent = "Next pass-through";
-  $("heroCountdown").textContent = fmtCountdown(dt);
+  setCountdown(dt);
   $("heroEta").textContent = "Passes at "+fmtClock(next.timeMin)+" · "+m.label;
   $("heroBadges").innerHTML =
     `<span class="badge ${m.cls}">${m.label}</span>`+
@@ -272,18 +398,16 @@ function render(){
 function setArrow(b){ $("arrow").style.transform = "translate(-50%,-50%) rotate("+b+"deg)"; applyDial(); }
 function applyDial(){ $("compass").style.transform = deviceHeading==null ? "rotate(0deg)" : "rotate("+(-deviceHeading)+"deg)"; }
 
-const ICON_OK = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg>';
-const ICON_WARN = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
-
+/* platform status — maru for clear, batsu for blocked */
 function setBanner(blk){
   const b=$("blockBanner");
   if(!blk){
-    b.className="banner clear"; $("blockIco").innerHTML=ICON_OK;
-    $("blockTitle").textContent="Track clear";
+    b.className="banner clear"; b.querySelector(".ico").textContent="○";
+    $("blockTitle").textContent="Track is clear";
     $("blockDesc").textContent="No standing train should block your shot.";
   } else {
     const m=S.TRAIN_META[blk.type], plat=(blk.platform!=null)?" at platform "+blk.platform:"";
-    b.className="banner blocked"; $("blockIco").innerHTML=ICON_WARN;
+    b.className="banner blocked"; b.querySelector(".ico").textContent="×";
     $("blockTitle").textContent="A "+m.label.split(" ").pop()+" is stopping"+plat;
     $("blockDesc").textContent="It may block the view until ~"+fmtClock(blk.until)+". Move to the other side of the platform.";
   }
@@ -296,15 +420,18 @@ function renderList(items, mode){
     const m=S.TRAIN_META[e.type], dest=e.dest||terminalName(e.dir);
     let right;
     if(mode==="dep"){
-      right = (e.platform!=null ? "Plat. "+e.platform+" · " : "") + Math.round(e.timeMin-t)+"m";
+      right = (e.platform!=null ? '<span class="li-plat">Plat. '+e.platform+'</span>' : "")+
+        `<span class="li-mins">${Math.round(e.timeMin-t)}m</span>`;
     } else {
       const blk=S.blockingTrain(events, e.timeMin, e.dir);
-      right = (blk?'<span style="color:var(--bad)">blocked</span>':'<span style="color:var(--ok)">clear</span>')+" · "+Math.round(e.timeMin-t)+"m";
+      right = (blk?'<span class="st-no" title="View may be blocked by a stopping train">×</span>'
+                  :'<span class="st-ok" title="Clear view">○</span>')+
+        `<span class="li-mins">${Math.round(e.timeMin-t)}m</span>`;
     }
     return `<li><span class="li-left"><span class="li-time">${fmtClock(e.timeMin)}</span>`+
       `<span class="badge ${m.cls}">${m.label.split(" ").pop()}</span>`+
       `<span class="small muted">${e.dir==="down"?"▶":"◀"} ${dest}</span></span>`+
-      `<span class="small">${right}</span></li>`;
+      `<span class="li-right">${right}</span></li>`;
   }).join("");
 }
 
@@ -322,26 +449,26 @@ async function enableCompass(){
     }
     window.addEventListener("deviceorientationabsolute", onOrient, true);
     window.addEventListener("deviceorientation", onOrient, true);
-    $("btnCompassLbl").textContent="Compass on — turn to face the arrow";
+    $("btnCompass").textContent="Compass on — turn to face the arrow";
     $("btnCompass").classList.add("on");
-  }catch(err){ $("btnCompassLbl").textContent="Compass unavailable"; }
+  }catch(err){ $("btnCompass").textContent="Compass unavailable"; }
 }
 $("btnCompass").addEventListener("click", enableCompass);
 
 /* GPS */
 $("btnLocate").addEventListener("click", ()=>{
   if(!navigator.geolocation){ $("locInfo").textContent="Geolocation isn't supported here."; return; }
-  $("btnLocateLbl").textContent="Locating…";
+  $("btnLocate").innerHTML='<span class="spin">◌</span> Locating…';
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:lat, longitude:lon}=pos.coords;
     const {idx,dist}=S.nearestStation(lat,lon);
     selectStation(idx);
     const inJapan = lat>24 && lat<46 && lon>122 && lon<154;
-    $("btnLocateLbl").textContent="Locate me";
+    $("btnLocate").textContent="Find my nearest station";
     $("locInfo").innerHTML = (inJapan?"":"You're not in Japan — showing a demo. ")+
       "Nearest: <b>"+S.STATIONS[idx].name+"</b> ("+S.STATIONS[idx].jp+") · "+dist.toFixed(1)+" km away.";
   }, err=>{
-    $("btnLocateLbl").textContent="Locate me";
+    $("btnLocate").textContent="Find my nearest station";
     $("locInfo").textContent="Couldn't locate you. Choose a station manually.";
   }, { enableHighAccuracy:true, timeout:10000, maximumAge:30000 });
 });
