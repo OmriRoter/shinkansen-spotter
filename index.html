@@ -227,7 +227,7 @@ function render(){
     `Passes <span class="a">${fromName} side (${S.compass(approach)})</span> ▶ <span class="b">${toName} side (${S.compass(exit)})</span>`;
   $("kvFrom").textContent = fromName+" · "+S.compass(approach)+" "+Math.round(approach)+"°";
   $("kvDir").textContent  = toName+" · "+S.compass(exit)+" "+Math.round(exit)+"°";
-  $("kvTrack").textContent = next.dir==="down" ? "Down track → "+terminalName("down") : "Up track → "+terminalName("up");
+  $("kvTrack").textContent = next.dir==="down" ? "Westbound track (→ "+terminalName("down")+")" : "Eastbound track (→ "+terminalName("up")+")";
   $("kvSpeed").textContent = "~"+m.cruise+" km/h";
   setArrow(approach);
 
