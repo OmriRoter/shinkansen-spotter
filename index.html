@@ -204,9 +204,7 @@
 
   <div class="panel">
     <button class="btn-primary" id="btnLocate">Find my nearest station</button>
-    <label class="fld" for="lineSel">Line</label>
-    <select id="lineSel"></select>
-    <label class="fld" for="stationSel">Station</label>
+    <label class="fld" for="stationSel">Or choose your station</label>
     <select id="stationSel"></select>
     <div id="locInfo" class="small muted" style="margin-top:10px;"></div>
   </div>
@@ -339,19 +337,9 @@ function setSign(idx){
   $("lineName").textContent = V.name+" Line "+V.jp+"新幹線";
 }
 
-let populatedLine = null;
-function populateStations(lk){
-  const v=S.line(lk);
-  $("stationSel").innerHTML = v.STATIONS.map((st,i)=>
-    `<option value="${st.id}">${st.name} ${st.jp}${v.isHub(i)?" — hub":" · spot"}</option>`).join("");
-  populatedLine = lk;
-}
-
 function selectStation(lk, idx){
-  if(populatedLine!==lk) populateStations(lk);
   lineKey=lk; V=S.line(lk); stationIdx=idx;
-  $("lineSel").value=lk;
-  $("stationSel").value=V.STATIONS[idx].id;
+  $("stationSel").value=lk+":"+V.STATIONS[idx].id;
   $("upStation").textContent = V.STATIONS[idx].name+" "+V.STATIONS[idx].jp;
   setSign(idx);
   $("sideDown").textContent = "▶ "+terminalName("down");   // toward higher-index terminal
@@ -549,16 +537,14 @@ $("btnLocate").addEventListener("click", ()=>locate(false));
 
 /* init */
 (function init(){
-  $("lineSel").innerHTML = S.LINE_KEYS.map(lk=>{
-    const v=S.line(lk); return `<option value="${lk}">${v.name} Shinkansen ${v.jp}新幹線</option>`;
+  // one station picker for everything — grouped by line for scannability; choosing
+  // any station switches the line automatically (the line is just context, not a step).
+  $("stationSel").innerHTML = S.LINE_KEYS.map(lk=>{
+    const v=S.line(lk);
+    const opts=v.STATIONS.map((st,i)=>`<option value="${lk}:${st.id}">${st.name} ${st.jp}${v.isHub(i)?" — hub":""}</option>`).join("");
+    return `<optgroup label="${v.name} Shinkansen ${v.jp}新幹線">${opts}</optgroup>`;
   }).join("");
-  $("lineSel").addEventListener("change", e=>{
-    const lk=e.target.value, v=S.line(lk);
-    let idx=v.STATIONS.findIndex((_,i)=>!v.isHub(i));   // default to a photo spot (non-hub)
-    if(idx<0) idx=0;
-    selectStation(lk, idx);
-  });
-  $("stationSel").addEventListener("change", e=> selectStation(lineKey, S.line(lineKey).indexOfId(e.target.value)));
+  $("stationSel").addEventListener("change", e=>{ const val=e.target.value, ci=val.indexOf(":"); const lk=val.slice(0,ci); selectStation(lk, S.line(lk).indexOfId(val.slice(ci+1))); });
   setInterval(render, 1000);
   setInterval(loadEvents, 300000);   // refresh timetable data every 5 minutes
   locate(true);                      // auto-detect location on load
