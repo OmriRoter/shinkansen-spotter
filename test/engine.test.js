@@ -43,12 +43,20 @@ t("classify maps service names", () => {
   assert.strictEqual(classify("Nozomi 225"), "nozomi");
   assert.strictEqual(classify("Kodama 631"), "kodama");
 });
-t("parseStationTimetable extracts trains from NAVITIME-like HTML", () => {
-  const html = `<div>06:00</div><span>Nozomi 1</span> ... <div>06:12</div><span>Hikari 463</span>`;
+t("parseStationTimetable extracts trains from NAVITIME diagram HTML", () => {
+  const html =
+    `<dl class="timetable-area__list--definition" data-destination="Hakata" ` +
+    `data-train-name="Nozomi 1 Go" data-hour="6" data-direction="down">` +
+    `<dt class="time">00</dt><dd class="type" style="color:#DBAF00;">Nozomi</dd></dl>` +
+    `<dl class="timetable-area__list--definition" data-destination="Shin-osaka" ` +
+    `data-train-name="Hikari 631 Go" data-hour="6" data-direction="down">` +
+    `<dt class="time">21</dt><dd class="type" style="color:#FF0000;">Hikari</dd></dl>`;
   const rows = parseStationTimetable(html, "down");
   assert.ok(rows.length >= 2);
   assert.strictEqual(rows[0].type, "nozomi");
   assert.strictEqual(rows[0].depMin, 360);
+  assert.strictEqual(rows[0].trainName, "Nozomi 1 Go");
+  assert.strictEqual(rows[1].depMin, 381);
 });
 
 console.log(`\n${pass} checks passed ✓`);

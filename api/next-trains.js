@@ -70,6 +70,20 @@ function buildSimEvents(idx) {
 function interpolate(loIdx, loT, hiIdx, hiT, idx) {
   return loT + ((CUM[idx] - CUM[loIdx]) / (CUM[hiIdx] - CUM[loIdx])) * (hiT - loT);
 }
+// NAVITIME (japantravel) Tokaido–Sanyo Shinkansen: line id + per-station node ids,
+// aligned to STATIONS order. Harvested from /en/area/jp/railroad/00000110/ .
+const LINE_ID = "00000110";
+const NODE_IDS = {
+  tokyo: "00006668", shinagawa: "00007825", shinyokohama: "00004179", odawara: "00003742",
+  atami: "00007326", mishima: "00003056", shinfuji: "00004358", shizuoka: "00004995",
+  kakegawa: "00001232", hamamatsu: "00007841", toyohashi: "00008206", mikawaanjo: "00002968",
+  nagoya: "00008576", gifuhashima: "00001468", maibara: "00008117", kyoto: "00001756",
+  shinosaka: "00004305",
+};
+const classify = (name) => {
+  const s = (name || "").toLowerCase();
+  return s.includes("nozomi") ? "nozomi" : s.includes("hikari") ? "hikari" : s.includes("kodama") ? "kodama" : null;
+};
 async function unlock(url) {
   const res = await fetch("https://api.brightdata.com/request", {
     method: "POST",
@@ -79,32 +93,49 @@ async function unlock(url) {
   if (!res.ok) throw new Error(`Bright Data ${res.status}`);
   return res.text();
 }
-function parseBoard(html) {
-  const out = [], re = /(\d{1,2}:\d{2})[\s\S]{0,120}?(Nozomi|Hikari|Kodama)\s*(\d+)?/gi;
-  let m;
-  while ((m = re.exec(html)) !== null) {
-    const mm = /(\d{1,2}):(\d{2})/.exec(m[1]);
-    out.push({ name: `${m[2]} ${m[3] || ""}`.trim(), type: m[2].toLowerCase(), depMin: +mm[1] * 60 + +mm[2] });
+// NAVITIME serves the timetable as a server-rendered "diagram": hour in data-hour,
+// minutes in <dt class="time">, plus data-train-name / data-direction / type.
+function parseBoard(html, dir) {
+  const out = [], blocks = String(html).split("timetable-area__list--definition").slice(1);
+  for (const blk of blocks) {
+    const seg = blk.slice(0, 600);
+    const name = (seg.match(/data-train-name="([^"]*)"/) || [])[1];
+    const hour = (seg.match(/data-hour="(\d+)"/) || [])[1];
+    const ddir = (seg.match(/data-direction="([^"]*)"/) || [])[1] || dir;
+    const tm = seg.match(/<dt class="time">\s*(\d{1,2})\s*<\/dt>/);
+    const ty = seg.match(/<dd class="type"[^>]*>\s*([^<]+?)\s*<\/dd>/);
+    const type = classify(name) || (ty ? classify(ty[1]) : null);
+    if (name && hour != null && tm && type) out.push({ name, type, dir: ddir, depMin: +hour * 60 + +tm[1] });
   }
   return out;
 }
 async function fetchBoard(idx, dir) {
-  const url = `https://japantravel.navitime.com/en/area/jp/timetable/search?word=${encodeURIComponent(STATIONS[idx].jp)}&direction=${dir}&type=Nozomi`;
-  return parseBoard(await unlock(url));
+  const node = NODE_IDS[STATIONS[idx].id];
+  if (!node) return [];
+  const url = `https://japantravel.navitime.com/en/area/jp/timetable/${node}/${LINE_ID}?direction=${dir}`;
+  return parseBoard(await unlock(url), dir);
 }
 async function buildLiveEvents(idx) {
   const events = [], stopIdxs = [...STOPS.nozomi].sort((a, b) => a - b);
+  const isStop = STOPS.nozomi.has(idx);
   for (const dir of ["down", "up"]) {
     const before = [...stopIdxs].reverse().find((i) => i < idx);
     const after = stopIdxs.find((i) => i > idx);
-    if (before == null || after == null) continue;
-    const [b1, b2] = await Promise.all([fetchBoard(before, dir), fetchBoard(after, dir)]);
-    const map = new Map();
-    for (const r of b1) map.set(r.name, { before: r.depMin, type: r.type });
-    for (const r of b2) { const e = map.get(r.name) || { type: r.type }; e.after = r.depMin; map.set(r.name, e); }
-    for (const [, e] of map) {
-      if (e.before == null || e.after == null) continue;
-      events.push({ type: e.type, dir, timeMin: interpolate(before, e.before, after, e.after, idx), stops: false });
+    const wrap = !isStop && before != null && after != null;
+    const [own, b1, b2] = await Promise.all([
+      fetchBoard(idx, dir),
+      wrap ? fetchBoard(before, dir) : Promise.resolve([]),
+      wrap ? fetchBoard(after, dir) : Promise.resolve([]),
+    ]);
+    for (const r of own) events.push({ type: r.type, dir, timeMin: r.depMin, stops: true });
+    if (wrap) {
+      const ownNames = new Set(own.map((r) => r.name)), map = new Map();
+      for (const r of b1) map.set(r.name, { before: r.depMin, type: r.type });
+      for (const r of b2) { const e = map.get(r.name); if (e) e.after = r.depMin; }
+      for (const [name, e] of map) {
+        if (e.before == null || e.after == null || ownNames.has(name)) continue;
+        events.push({ type: e.type, dir, timeMin: interpolate(before, e.before, after, e.after, idx), stops: false });
+      }
     }
   }
   events.sort((a, b) => a.timeMin - b.timeMin);
