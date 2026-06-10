@@ -280,6 +280,14 @@ const FALLBACK = { line: "tokaido", id: "odawara" };  // only if location is den
 let events = [];
 let deviceHeading = null;
 let sideFilter = "both";               // "down" | "up" | "both" — which platform the user is on
+
+// ---- debug helpers (URL params, no effect unless present) ----
+//   ?at=HH:MM      simulate a Japan-time clock (ticks forward) to test countdowns/blocking
+//   ?station=ID    deep-link a station (skips GPS);  ?line=KEY pins the line for shared ids
+const Q = new URLSearchParams(location.search);
+let timeBase = null, timeStart = 0;
+(function(){ const a=Q.get("at")||Q.get("time"); const mm=a&&/^(\d{1,2}):(\d{2})$/.exec(a); if(mm){ timeBase=(+mm[1])*60+(+mm[2]); timeStart=Date.now(); } })();
+
 function label(type){ const m = S.meta(type); return m.jp + " " + m.en; }
 function relSide(bearingFrom){          // left/right of the user's view, needs the device compass
   if(deviceHeading==null) return null;
@@ -293,7 +301,7 @@ function jstParts(){
   const g = t => +p.find(x=>x.type===t).value;
   return { h:g("hour")%24, m:g("minute"), s:g("second") };
 }
-function nowMinutes(){ const {h,m,s}=jstParts(); return h*60 + m + s/60; }
+function nowMinutes(){ if(timeBase!=null) return timeBase + (Date.now()-timeStart)/60000; const {h,m,s}=jstParts(); return h*60 + m + s/60; }
 function fmtClock(min){ const h=Math.floor(min/60)%24, m=Math.floor(min%60); return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
 function fmtCountdown(mins){
   if(mins<0)mins=0; const t=Math.round(mins*60);
@@ -373,7 +381,8 @@ function applyGeometry(ev){
 }
 
 function render(){
-  { const {h,m,s}=jstParts(); $("clock").textContent = [h,m,s].map(n=>String(n).padStart(2,"0")).join(":")+" JST"; }
+  if(timeBase!=null){ const n=nowMinutes(); $("clock").textContent = fmtClock(n)+":"+String(Math.floor((n*60)%60)).padStart(2,"0")+" · DEBUG"; }
+  else { const {h,m,s}=jstParts(); $("clock").textContent = [h,m,s].map(n=>String(n).padStart(2,"0")).join(":")+" JST"; }
   if(!V || stationIdx==null) return;   // still locating — keep the placeholder
   const t = nowMinutes();
   const future = events.filter(e => e.timeMin>t);
@@ -548,9 +557,17 @@ $("btnLocate").addEventListener("click", ()=>locate(false));
   $("stationSel").addEventListener("change", e=>{ const val=e.target.value, ci=val.indexOf(":"); const lk=val.slice(0,ci); selectStation(lk, S.line(lk).indexOfId(val.slice(ci+1))); });
   setInterval(render, 1000);
   setInterval(loadEvents, 300000);   // refresh timetable data every 5 minutes
-  locate(true);                      // auto-detect location on load
-  // safety net: if the location prompt is ignored entirely, show a station anyway
-  setTimeout(fallbackIfUnset, 12000);
+  // deep-link a station for debugging (?station=ID[&line=KEY]), else auto-locate
+  const stParam = Q.get("station"), lnParam = Q.get("line");
+  let deepLinked = false;
+  if(stParam){
+    if(lnParam && S.line(lnParam) && S.line(lnParam).indexOfId(stParam)>=0){ selectStation(lnParam, S.line(lnParam).indexOfId(stParam)); deepLinked=true; }
+    else for(const lk of S.LINE_KEYS){ const i=S.line(lk).indexOfId(stParam); if(i>=0){ selectStation(lk, i); deepLinked=true; break; } }
+  }
+  if(!deepLinked){
+    locate(true);                    // auto-detect location on load
+    setTimeout(fallbackIfUnset, 12000); // safety net if the prompt is ignored
+  }
 })();
 </script>
 <!-- Vercel Web Analytics — privacy-first (no cookies, no consent banner needed).
