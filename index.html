@@ -116,6 +116,13 @@
   .badge.dir{color:var(--board-txt);}
   .passline{margin-top:12px; font-size:13px; font-weight:500; color:var(--board-txt);}
   .passline .a{color:var(--amber-board);} .passline .b{color:var(--led);}
+  .sideline{margin-top:8px; font-size:12.5px; font-weight:600; color:var(--board-dim); min-height:1px;}
+  .sideline b{color:var(--led);} .sideline .lr{color:var(--amber-board);}
+  .pp{margin-bottom:14px;}
+  .pp-l{display:block; font-size:9.5px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:var(--board-dim); margin-bottom:7px;}
+  .pp-seg{display:flex; gap:4px; background:var(--board-raise); border:1px solid var(--board-line); border-radius:10px; padding:4px;}
+  .pp-seg button{flex:1; width:auto; min-height:0; background:transparent; color:var(--board-dim); border:none; border-radius:7px; padding:9px 6px; font-size:12px; font-weight:700; letter-spacing:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pp-seg button.on{background:var(--led); color:#04130c;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:13px 12px; margin-top:16px; padding-top:14px; border-top:1px solid var(--board-line);}
   .kv .k{font-size:10px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:var(--board-dim); display:block; margin-bottom:2px;}
   .kv .v{font-size:13.5px; font-weight:700; overflow-wrap:anywhere;}
@@ -209,6 +216,14 @@
   </div>
 
   <div class="board hero">
+    <div class="pp">
+      <span class="pp-l">Your platform — trains in front travel toward</span>
+      <div class="pp-seg" id="sideSeg">
+        <button data-side="down" id="sideDown">Down</button>
+        <button data-side="up" id="sideUp">Up</button>
+        <button data-side="both" class="on">Either</button>
+      </div>
+    </div>
     <div class="row between" style="align-items:flex-start;">
       <div style="min-width:0;">
         <div class="board-label" id="heroLabel">Finding your station</div>
@@ -216,6 +231,7 @@
         <div class="eta" id="heroEta">Detecting your location…</div>
         <div class="badges" id="heroBadges"></div>
         <div class="passline" id="heroPass"></div>
+        <div class="sideline" id="sideInfo"></div>
       </div>
       <div class="compass-box">
         <div class="compass" id="compass">
@@ -263,7 +279,13 @@ let stationIdx = null;                 // chosen from GPS on load; null = still 
 const FALLBACK = { line: "tokaido", id: "odawara" };  // only if location is denied/unavailable
 let events = [];
 let deviceHeading = null;
+let sideFilter = "both";               // "down" | "up" | "both" — which platform the user is on
 function label(type){ const m = S.meta(type); return m.jp + " " + m.en; }
+function relSide(bearingFrom){          // left/right of the user's view, needs the device compass
+  if(deviceHeading==null) return null;
+  const rel = ((bearingFrom - deviceHeading + 540) % 360) - 180;
+  return Math.abs(rel) < 18 ? "ahead" : (rel > 0 ? "right" : "left");
+}
 
 // Timetables are Japan time, so compute "now" in Asia/Tokyo regardless of the device clock.
 function jstParts(){
@@ -320,8 +342,16 @@ function selectStation(lk, idx){
   $("stationSel").value=lk+":"+V.STATIONS[idx].id;
   $("upStation").textContent = V.STATIONS[idx].name+" "+V.STATIONS[idx].jp;
   setSign(idx);
+  $("sideDown").textContent = "▶ "+terminalName("down");   // toward higher-index terminal
+  $("sideUp").textContent   = "◀ "+terminalName("up");     // toward Tokyo/origin
   loadEvents();
 }
+$("sideSeg").addEventListener("click", e=>{
+  const b=e.target.closest("button[data-side]"); if(!b) return;
+  sideFilter=b.dataset.side;
+  [...$("sideSeg").children].forEach(x=>x.classList.toggle("on", x===b));
+  render();
+});
 
 function setCountdown(mins){
   const cd=$("heroCountdown");
@@ -347,7 +377,8 @@ function render(){
   if(!V || stationIdx==null) return;   // still locating — keep the placeholder
   const t = nowMinutes();
   const future = events.filter(e => e.timeMin>t);
-  const passes = future.filter(e => !e.stops);   // any non-stopping train is a pass-through
+  const passesAll = future.filter(e => !e.stops);                  // any non-stopping train
+  const passes = sideFilter==="both" ? passesAll : passesAll.filter(e => e.dir===sideFilter);
   const next = passes[0];
 
   if(!next){
@@ -363,6 +394,10 @@ function render(){
         `<span class="badge ${m.cls}">${label(d.type)}</span>`+
         `<span class="badge dir">${d.dir==="down"?"▶":"◀"} to ${dest}</span>`;
       $("heroPass").textContent = V.isHub(stationIdx) ? "Trains stop here — try an intermediate station to catch pass-throughs." : "";
+      $("sideInfo").innerHTML = passesAll[0]
+        ? (sideFilter!=="both" ? `Nothing toward ${terminalName(sideFilter)} soon. ` : "")
+          + `Next pass-through (through track): <b>${fmtClock(passesAll[0].timeMin)}</b>`
+        : "";
       applyGeometry(d);
       $("kvSpeed").textContent = "Stops here";
       setBanner(null);
@@ -374,7 +409,7 @@ function render(){
     $("heroCountdown").textContent="--:--";
     $("heroCountdown").classList.remove("soon","now");
     $("heroEta").textContent = "No more trains today. Service runs roughly 06:00–23:00 JST.";
-    $("heroBadges").innerHTML=""; $("heroPass").textContent=""; setArrow(0);
+    $("heroBadges").innerHTML=""; $("heroPass").textContent=""; $("sideInfo").textContent=""; setArrow(0);
     ["kvFrom","kvDir","kvTrack","kvSpeed"].forEach(k=>$(k).textContent="—");
     setBanner(null);
     $("listTitle").textContent = "Upcoming pass-throughs";
@@ -395,6 +430,14 @@ function render(){
   $("heroPass").innerHTML =
     `Passes <span class="a">${g.fromName} side (${S.compass(g.approach)})</span> ▶ <span class="b">${g.toName} side (${S.compass(g.exit)})</span>`;
   $("kvSpeed").textContent = "~"+m.cruise+" km/h";
+
+  // platform-aware guidance: which way to look, and what's on the far track
+  const lr = relSide(g.approach);
+  const far = passesAll.find(e => e.dir !== next.dir);
+  $("sideInfo").innerHTML =
+    (lr ? (lr==="ahead" ? "Coming straight <b>ahead</b>. " : `Enters from your <span class="lr">${lr.toUpperCase()}</span>. `)
+        : `Tap “Calibrate device compass” for left/right. `)
+    + (far ? `Far track (${far.dir==="down"?terminalName("down"):terminalName("up")}): in ${fmtCountdown(far.timeMin-t)}` : "");
 
   setBanner(S.blockingTrain(events, next.timeMin, next.dir));
   $("listTitle").textContent = "Upcoming pass-throughs";

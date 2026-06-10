@@ -107,13 +107,20 @@
       if (dir === "down") { const p = Math.max(0, idx - 1); return bearing(stations[idx], stations[p]); }
       const p = Math.min(N - 1, idx + 1); return bearing(stations[idx], stations[p]);
     }
+    // local orientation of the line through the station, pointing "down" (toward the
+    // higher-index terminal). Averages the in/out segments so curves at the station
+    // are better approximated than a single segment.
+    function trackBearing(idx) {
+      const a = stations[Math.max(0, idx - 1)], b = stations[Math.min(N - 1, idx + 1)];
+      return bearing(a, b);
+    }
 
     return (viewCache[key] = {
       key, name: L.name, jp: L.jp, lineId: L.lineId,
       STATIONS: stations, N, CUM, STOPS, types: L.types, express, HUBS,
       hubs: () => HUBS,
       isHub: idx => HUBS.indexOf(idx) >= 0,
-      indexOfId, buildSimEvents, interpolatePass, approachBearing,
+      indexOfId, buildSimEvents, interpolatePass, approachBearing, trackBearing,
     });
   }
 
