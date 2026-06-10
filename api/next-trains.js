@@ -112,11 +112,23 @@ function parseBoard(html, dir) {
   }
   return out;
 }
+// In-memory timetable-board cache (per warm function instance). Boards are shared
+// across stations (computing Odawara and Atami both read the Shin-Yokohama/Nagoya
+// boards) and across requests, so this keeps Bright Data calls to a minimum even
+// under load or cache-busting query strings. The Vercel CDN cache (set on the
+// response below) absorbs most repeat traffic before it reaches this function at all.
+const BOARD_TTL_MS = 15 * 60 * 1000;
+const boardCache = new Map(); // `${node}:${dir}` -> { at, rows }
 async function fetchBoard(idx, dir) {
   const node = NODE_IDS[STATIONS[idx].id];
   if (!node) return [];
+  const key = node + ":" + dir;
+  const hit = boardCache.get(key);
+  if (hit && Date.now() - hit.at < BOARD_TTL_MS) return hit.rows;
   const url = `https://japantravel.navitime.com/en/area/jp/timetable/${node}/${LINE_ID}?direction=${dir}`;
-  return parseBoard(await unlock(url), dir);
+  const rows = parseBoard(await unlock(url), dir);
+  boardCache.set(key, { at: Date.now(), rows });
+  return rows;
 }
 async function buildLiveEvents(idx) {
   const events = [], stopIdxs = [...STOPS.nozomi].sort((a, b) => a - b);
@@ -156,9 +168,10 @@ module.exports = async (req, res) => {
   const id = (Array.isArray(q) ? q[0] : q || "odawara").toString().toLowerCase();
   const idx = idOf(id);
   if (idx < 0) { res.status(400).json({ error: "unknown station id" }); return; }
-  // Timetables only change daily; let Vercel's CDN absorb repeat hits so most
-  // visitors get a cached response instead of waiting on a fresh scrape.
-  res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=3600");
+  // Timetables only change daily, so cache aggressively on Vercel's CDN: the same
+  // station's data is served to every visitor for 30 min without re-invoking this
+  // function, and stale-while-revalidate keeps responses instant during refresh.
+  res.setHeader("Cache-Control", "public, s-maxage=1800, stale-while-revalidate=86400");
   if (process.env.BRIGHTDATA_API_TOKEN) {
     try {
       const events = await buildLiveEvents(idx);

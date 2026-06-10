@@ -76,14 +76,23 @@ function parseStationTimetable(html, dir) {
   return out;
 }
 
-/* מושך את לו"ז התחנה (כל הרכבות שעוצרות בה) בכיוון נתון */
+/* cache בזיכרון ללוחות-זמנים (לפי node:dir). לוחות משותפים בין תחנות ובקשות,
+   כך שמספר קריאות Bright Data נשאר נמוך גם בעומס. TTL של 15 דקות. */
+const BOARD_TTL_MS = 15 * 60 * 1000;
+const boardCache = new Map(); // `${node}:${dir}` -> { at, rows }
+
+/* מושך את לו"ז התחנה (כל הרכבות שעוצרות בה) בכיוון נתון, עם cache */
 async function fetchStationBoard(stationIdx, dir) {
   const st = Spotter.STATIONS[stationIdx];
   const node = NODE_IDS[st.id];
   if (!node) return [];
+  const key = node + ":" + dir;
+  const hit = boardCache.get(key);
+  if (hit && Date.now() - hit.at < BOARD_TTL_MS) return hit.rows;
   const url = `https://japantravel.navitime.com/en/area/jp/timetable/${node}/${LINE_ID}?direction=${dir}`;
-  const html = await unlock(url, { country: "jp" });
-  return parseStationTimetable(html, dir);
+  const rows = parseStationTimetable(await unlock(url, { country: "jp" }), dir);
+  boardCache.set(key, { at: Date.now(), rows });
+  return rows;
 }
 
 /**
