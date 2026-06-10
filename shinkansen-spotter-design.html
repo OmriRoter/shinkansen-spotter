@@ -90,6 +90,18 @@
     select:hover{border-color:var(--ink-soft);}
   }
 
+  /* ---- searchable station combobox ---- */
+  .combo{position:relative;}
+  .combo input{font-family:inherit; font-size:15px; width:100%; min-height:46px; background:var(--concrete); color:var(--ink); border:1px solid var(--hairline); border-radius:var(--r-s); padding:12px 13px;}
+  .combo input::placeholder{color:var(--ink-soft);}
+  .combo-list{position:absolute; z-index:40; left:0; right:0; top:calc(100% + 5px); margin:0; padding:4px; list-style:none; max-height:280px; overflow:auto; background:var(--sign); border:1px solid var(--hairline); border-radius:var(--r-s); box-shadow:0 10px 28px rgba(26,30,35,.22); -webkit-overflow-scrolling:touch;}
+  .combo-list li{display:flex; justify-content:space-between; gap:10px; align-items:baseline; padding:11px 12px; border-radius:7px; cursor:pointer;}
+  .combo-list li.active,.combo-list li:hover{background:var(--concrete);}
+  .combo-list .nm{font-weight:700;}
+  .combo-list .jp{color:var(--ink-soft); font-weight:500; margin-left:7px;}
+  .combo-list .ln{font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--tokaido); white-space:nowrap; flex:0 0 auto;}
+  .combo-list .none{color:var(--ink-soft); cursor:default; justify-content:flex-start;}
+
   /* ---- ekimeihyo: the station name sign ---- */
   .sign{background:var(--sign); border:2px solid var(--ink); border-radius:var(--r-m); overflow:hidden; margin-bottom:var(--gap); box-shadow:0 2px 0 rgba(26,30,35,.14);}
   .sign-top{padding:16px 14px 4px; text-align:center;}
@@ -204,8 +216,11 @@
 
   <div class="panel">
     <button class="btn-primary" id="btnLocate">Find my nearest station</button>
-    <label class="fld" for="stationSel">Or choose your station</label>
-    <select id="stationSel"></select>
+    <label class="fld" for="stationSearch">Or search your station</label>
+    <div class="combo">
+      <input id="stationSearch" type="text" inputmode="search" autocomplete="off" spellcheck="false" placeholder="Type a station — Shizuoka, 静岡, Tohoku…" />
+      <ul id="stationResults" class="combo-list" hidden></ul>
+    </div>
     <div id="locInfo" class="small muted" style="margin-top:10px;"></div>
   </div>
 
@@ -508,7 +523,8 @@ function setSign(idx){
 
 function selectStation(lk, idx){
   lineKey=lk; V=S.line(lk); stationIdx=idx;
-  $("stationSel").value=lk+":"+V.STATIONS[idx].id;
+  $("stationSearch").value = V.STATIONS[idx].name+" "+V.STATIONS[idx].jp;
+  hideResults();
   $("upStation").textContent = V.STATIONS[idx].name+" "+V.STATIONS[idx].jp;
   setSign(idx);
   $("sideDown").textContent = "▶ "+terminalName("down");   // toward higher-index terminal
@@ -706,16 +722,49 @@ function locate(auto){
 }
 $("btnLocate").addEventListener("click", ()=>locate(false));
 
+/* searchable station combobox — type a romaji name, kanji, or line */
+const COMBO = [];
+let comboMatches = [], comboActive = -1;
+function hideResults(){ $("stationResults").hidden = true; comboActive = -1; }
+function renderResults(q){
+  q = (q||"").toLowerCase().trim();
+  comboMatches = (!q ? COMBO : COMBO.filter(s =>
+    s.name.toLowerCase().includes(q) || (s.jp && s.jp.includes(q)) || s.line.toLowerCase().includes(q))).slice(0,50);
+  const ul = $("stationResults");
+  if(!comboMatches.length){ ul.innerHTML = '<li class="none">No matching station</li>'; ul.hidden = false; return; }
+  ul.innerHTML = comboMatches.map((s,i)=>
+    `<li data-i="${i}"><span><span class="nm">${s.name}</span><span class="jp">${s.jp}</span></span>`+
+    `<span class="ln">${s.line}${s.hub?" · hub":""}</span></li>`).join("");
+  comboActive = -1; ul.hidden = false;
+}
+function comboPick(i){ const s = comboMatches[i]; if(s) selectStation(s.lk, s.idx); }
+function comboNav(d){
+  if(!comboMatches.length) return;
+  comboActive = (comboActive + d + comboMatches.length) % comboMatches.length;
+  const ul = $("stationResults");
+  [...ul.children].forEach((li,i)=>li.classList.toggle("active", i===comboActive));
+  const a = ul.children[comboActive]; if(a && a.scrollIntoView) a.scrollIntoView({block:"nearest"});
+}
+function initCombo(){
+  S.LINE_KEYS.forEach(lk=>{ const v=S.line(lk); v.STATIONS.forEach((st,idx)=>
+    COMBO.push({ lk, idx, name:st.name, jp:st.jp, line:v.name, hub:v.isHub(idx) })); });
+  const inp = $("stationSearch"), ul = $("stationResults");
+  inp.addEventListener("focus", ()=>{ inp.select(); renderResults(""); });
+  inp.addEventListener("input", ()=> renderResults(inp.value));
+  inp.addEventListener("keydown", e=>{
+    if(ul.hidden) return;
+    if(e.key==="ArrowDown"){ e.preventDefault(); comboNav(1); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); comboNav(-1); }
+    else if(e.key==="Enter"){ e.preventDefault(); comboPick(comboActive>=0?comboActive:0); }
+    else if(e.key==="Escape"){ hideResults(); inp.blur(); }
+  });
+  ul.addEventListener("mousedown", e=>{ const li=e.target.closest("li[data-i]"); if(li){ e.preventDefault(); comboPick(+li.dataset.i); } });
+  document.addEventListener("click", e=>{ if(!e.target.closest(".combo")) hideResults(); });
+}
+
 /* init */
 (function init(){
-  // one station picker for everything — grouped by line for scannability; choosing
-  // any station switches the line automatically (the line is just context, not a step).
-  $("stationSel").innerHTML = S.LINE_KEYS.map(lk=>{
-    const v=S.line(lk);
-    const opts=v.STATIONS.map((st,i)=>`<option value="${lk}:${st.id}">${st.name} ${st.jp}${v.isHub(i)?" — hub":""}</option>`).join("");
-    return `<optgroup label="${v.name} Shinkansen ${v.jp}新幹線">${opts}</optgroup>`;
-  }).join("");
-  $("stationSel").addEventListener("change", e=>{ const val=e.target.value, ci=val.indexOf(":"); const lk=val.slice(0,ci); selectStation(lk, S.line(lk).indexOfId(val.slice(ci+1))); });
+  initCombo();                       // searchable station picker (all lines, one box)
   setInterval(render, 1000);
   setInterval(loadEvents, 300000);   // refresh timetable data every 5 minutes
   // deep-link a station for debugging (?station=ID[&line=KEY]), else auto-locate
