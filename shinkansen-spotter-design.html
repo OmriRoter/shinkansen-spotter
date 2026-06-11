@@ -436,8 +436,11 @@
     let hit = null;
     for (const e of events) {
       if (!e.stops || e.dir !== dir) continue;
+      // Researched dwell times: a fast train's normal stop is ~0.5–2 min, while a local
+      // (Kodama/Tsubame/…) waits ~3–6 min at a station to be overtaken — exactly the
+      // blocking case — so locals get a 5-min occupancy window.
       const cls = meta(e.type).cls;
-      const dwell = cls === "local" ? 4 : cls === "rapid" ? 2 : 1.5;
+      const dwell = cls === "local" ? 5 : cls === "rapid" ? 2 : 1.5;
       const margin = 0.5;
       if (t >= e.timeMin - dwell - margin && t <= e.timeMin + margin) {
         if (!hit || e.timeMin < hit.until) hit = { type: e.type, until: e.timeMin, platform: e.platform };
