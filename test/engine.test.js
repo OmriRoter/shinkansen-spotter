@@ -39,11 +39,12 @@ t("approachBearing differs by direction", () => {
   const v = S.line("tokaido"), i = v.indexOfId("odawara");
   assert.notStrictEqual(Math.round(v.approachBearing(i, "down")), Math.round(v.approachBearing(i, "up")));
 });
-t("blockingTrain flags a same-direction stopped train, carries platform", () => {
+t("blockingTrain flags a same-direction train while it sits, clears after departure", () => {
   const ev = [{ type: "kodama", dir: "down", timeMin: 600, stops: true, platform: 13 }];
-  const blk = S.blockingTrain(ev, 602, "down");
+  const blk = S.blockingTrain(ev, 598, "down");   // 2 min before departure → still at platform
   assert.ok(blk && blk.platform === 13);
-  assert.ok(!S.blockingTrain(ev, 602, "up"));
+  assert.ok(!S.blockingTrain(ev, 603, "down"));   // after departure → gone
+  assert.ok(!S.blockingTrain(ev, 598, "up"));     // opposite direction → far platform
 });
 t("meta() resolves every train type used across the lines", () => {
   const types = new Set();

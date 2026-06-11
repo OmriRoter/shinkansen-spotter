@@ -137,14 +137,23 @@
     return best;
   }
 
-  /* a stopping train (same direction) that may block the shot while it dwells */
+  /* a stopping train (same direction) that may block the shot while it sits at the
+     platform. We only know its departure time from the timetable, so we estimate it
+     occupies the platform from ~arrival (departure − dwell) until departure. Locals
+     (Kodama/Tsubame/…) often wait several minutes to be overtaken — exactly the
+     blocking case — so they get a wider window. */
   function blockingTrain(events, t, dir) {
+    let hit = null;
     for (const e of events) {
       if (!e.stops || e.dir !== dir) continue;
-      const dwell = (meta(e.type).dwell || 1.5) + (meta(e.type).cls === "local" ? 4 : 0);
-      if (t >= e.timeMin - 0.3 && t <= e.timeMin + dwell + 0.3) return { type: e.type, until: e.timeMin + dwell, platform: e.platform };
+      const cls = meta(e.type).cls;
+      const dwell = cls === "local" ? 4 : cls === "rapid" ? 2 : 1.5;
+      const margin = 0.5;
+      if (t >= e.timeMin - dwell - margin && t <= e.timeMin + margin) {
+        if (!hit || e.timeMin < hit.until) hit = { type: e.type, until: e.timeMin, platform: e.platform };
+      }
     }
-    return null;
+    return hit;
   }
 
   return {
