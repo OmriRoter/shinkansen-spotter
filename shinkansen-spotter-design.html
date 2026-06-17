@@ -474,6 +474,7 @@ let events = [];
 let deviceHeading = null;
 let sideFilter = "both";               // "down" | "up" | "both" — which platform the user is on
 const PASS_W = 1;                      // pass-through times are estimates → show a ±1 min window (camera-verified)
+const PASS_LINGER = 0.5;               // keep a passed train shown only ~30s, then advance to the next
 
 // ---- debug helpers (URL params, no effect unless present) ----
 //   ?at=HH:MM      simulate a Japan-time clock (ticks forward) to test countdowns/blocking
@@ -596,8 +597,8 @@ function render(){
   if(!V || stationIdx==null) return;   // still locating — keep the placeholder
   const t = nowMinutes();
   const future = events.filter(e => e.timeMin>t);
-  // a pass-through lingers through its ±window so it stays shown while it may be passing
-  const passesAll = events.filter(e => !e.stops && e.timeMin + PASS_W > t);
+  // keep a just-passed train shown briefly, then advance to the next one
+  const passesAll = events.filter(e => !e.stops && e.timeMin + PASS_LINGER > t);
   const passes = sideFilter==="both" ? passesAll : passesAll.filter(e => e.dir===sideFilter);
   const next = passes[0];
 
@@ -639,8 +640,11 @@ function render(){
 
   const m=S.meta(next.type), dt=next.timeMin-t;
   const dest = next.dest || terminalName(next.dir);
-  $("heroLabel").textContent = dt < PASS_W ? "Passing now" : "Next pass-through";
-  setCountdown(dt);
+  const passingNow = dt <= 0.1;        // at/after the central estimate → it's passing
+  $("heroLabel").textContent = passingNow ? "Passing now" : "Next pass-through";
+  if(passingNow){
+    const cd=$("heroCountdown"); cd.textContent="NOW"; cd.classList.add("now"); cd.classList.remove("soon");
+  } else setCountdown(dt);
   $("heroEta").innerHTML = "Passes ≈ <b>"+fmtClock(next.timeMin-PASS_W)+"–"+fmtClock(next.timeMin+PASS_W)+"</b> · "+label(next.type);
   $("heroBadges").innerHTML =
     `<span class="badge ${m.cls}">${label(next.type)}</span>`+
