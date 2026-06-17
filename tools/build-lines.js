@@ -17,7 +17,7 @@ const LINE_META = {
   sanyo:    { name: "Sanyo",    jp: "山陽",   express: "mizuho",   hubs: ["Shin-osaka", "Shin-kobe", "Himeji", "Okayama", "Fukuyama", "Hiroshima", "Shin-Yamaguchi", "Kokura(Fukuoka)", "Hakata"] },
   tohoku:   { name: "Tohoku",   jp: "東北",   express: "hayabusa", hubs: ["Tokyo", "Ueno", "Omiya (Saitama)", "Sendai", "Morioka", "Shin-Aomori"] },
   kyushu:   { name: "Kyushu",   jp: "九州",   express: "mizuho",   hubs: ["Hakata", "Kurume", "Kumamoto", "Sendai(Kagoshima)", "Kagoshima-chuo"] },
-  hokuriku: { name: "Hokuriku", jp: "北陸",   express: "hakutaka", hubs: ["Tokyo", "Ueno", "Omiya (Saitama)", "Nagano", "Joetsu-myoko"] },
+  hokuriku: { name: "Hokuriku", jp: "北陸",   express: "kagayaki", hubs: ["Tokyo", "Ueno", "Omiya (Saitama)", "Nagano", "Toyama", "Kanazawa", "Fukui(Fukui)", "Tsuruga"] },
 };
 
 // cls tiers: ltd = premier express, rapid = limited-stop, local = all-stops
@@ -37,6 +37,7 @@ const TYPE_META = {
   tsubame:  { en: "Tsubame",  jp: "つばめ",   cls: "local", cruise: 260, dwell: 1.0 },
   nasuno:   { en: "Nasuno",   jp: "なすの",   cls: "local", cruise: 240, dwell: 1.0 },
   asama:    { en: "Asama",    jp: "あさま",   cls: "local", cruise: 260, dwell: 1.0 },
+  tsurugi:  { en: "Tsurugi",  jp: "つるぎ",   cls: "local", cruise: 260, dwell: 1.0 },
 };
 
 let ok = true;

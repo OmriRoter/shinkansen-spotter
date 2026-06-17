@@ -44,11 +44,12 @@ function parseBoard(html, dir) {
 const BOARD_TTL_MS = 15 * 60 * 1000;
 const boardCache = new Map();
 async function fetchBoard(view, idx, dir) {
-  const node = view.STATIONS[idx].node;
-  const key = view.lineId + ":" + node + ":" + dir;
+  const st = view.STATIONS[idx];
+  const node = st.node, nl = st.nl || view.lineId;   // some lines span >1 NAVITIME line id (e.g. Hokuriku)
+  const key = nl + ":" + node + ":" + dir;
   const hit = boardCache.get(key);
   if (hit && Date.now() - hit.at < BOARD_TTL_MS) return hit.rows;
-  const url = `https://japantravel.navitime.com/en/area/jp/timetable/${node}/${view.lineId}?direction=${dir}`;
+  const url = `https://japantravel.navitime.com/en/area/jp/timetable/${node}/${nl}?direction=${dir}`;
   const rows = parseBoard(await unlock(url), dir);
   boardCache.set(key, { at: Date.now(), rows });
   return rows;
