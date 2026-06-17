@@ -90,6 +90,10 @@
     select:hover{border-color:var(--ink-soft);}
   }
 
+  .verify{margin-top:10px; font-size:12.5px; color:var(--ink-soft);}
+  .verify a{color:var(--tokaido); font-weight:700; text-decoration:none;}
+  .verify a:active{opacity:.7;}
+
   /* ---- searchable station combobox ---- */
   .combo{position:relative;}
   .combo input{font-family:inherit; font-size:15px; width:100%; min-height:46px; background:var(--concrete); color:var(--ink); border:1px solid var(--hairline); border-radius:var(--r-s); padding:12px 13px;}
@@ -222,6 +226,7 @@
       <ul id="stationResults" class="combo-list" hidden></ul>
     </div>
     <div id="locInfo" class="small muted" style="margin-top:10px;"></div>
+    <div id="verifyLinks" class="verify"></div>
   </div>
 
   <div class="sign" aria-label="Station sign">
@@ -361,10 +366,25 @@ function setSign(idx){
   $("lineName").textContent = V.name+" Line "+V.jp+"新幹線";
 }
 
+// verified 24/7 live cameras at app stations + JR's real-time map, for remote checking
+const CAMS = {
+  "tokaido:odawara":  "https://www.youtube.com/@kodamalifeshinkansen/live",
+  "tokaido:shizuoka": "https://www.youtube.com/@ShinkansenLiveCamera/live",
+};
+const JR_MAP = "https://traininfo.jr-central.co.jp/shinkansen/pc/en/ti08.html";
+function setVerify(lk, idx){
+  const parts = [];
+  const cam = CAMS[lk+":"+V.STATIONS[idx].id];
+  if(cam) parts.push('📹 <a href="'+cam+'" target="_blank" rel="noopener">Watch '+V.STATIONS[idx].name+' live</a>');
+  if(lk==="tokaido"||lk==="sanyo") parts.push('<a href="'+JR_MAP+'" target="_blank" rel="noopener">JR live map ↗</a>');
+  $("verifyLinks").innerHTML = parts.length ? "Verify: "+parts.join(" &nbsp;·&nbsp; ") : "";
+}
+
 function selectStation(lk, idx){
   lineKey=lk; V=S.line(lk); stationIdx=idx;
   $("stationSearch").value = V.STATIONS[idx].name+" "+V.STATIONS[idx].jp;
   hideResults();
+  setVerify(lk, idx);
   $("upStation").textContent = V.STATIONS[idx].name+" "+V.STATIONS[idx].jp;
   setSign(idx);
   $("sideDown").textContent = "▶ "+terminalName("down");   // toward higher-index terminal
